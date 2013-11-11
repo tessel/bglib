@@ -1,3 +1,7 @@
+var bitwise = require('./BitwiseOperations/BitwiseOperations');
+var libRes = require('./BGLibResponses/BGLibResponses');
+var libEvent = require('./BGLibEvents/BGLibEvents');
+
 var _bglibPMode;
 
 var PACKET_MODE = 1;
@@ -25,7 +29,9 @@ var _bgcommandClass = {
 	AttributeClient : 4,
 	SecurityManager : 5,
 	GenericAccessProfile : 6,
-	Hardware : 7
+	Hardware : 7,
+	Test : 8,
+	DFU : 9,
 }
 
 var _bgcommandIDs = {
@@ -81,7 +87,7 @@ var _bgcommandIDs = {
 	Attclient_Read_By_Type : 2,
 	Attclient_Find_Information : 3,
 	Attclient_Read_By_Handle : 4,
-	Attclient_Attribute_Write_Command : 5,
+	Attclient_Attribute_Write : 5,
 	Attclient_Write_Command : 6,
 	Attclient_Indicate_Confirm : 7,
 	Attclient_Read_Long : 8,
@@ -106,11 +112,11 @@ var _bgcommandIDs = {
 	GAP_Connect_Direct : 3,
 	GAP_End_Procedure : 4,
 	GAP_Connect_Selective : 5,
-	GAP_Set_Filering : 6,
+	GAP_Set_Filtering : 6,
 	GAP_Set_Scan_Parameters : 7,
 	GAP_Set_Adv_Parameters : 8,
 	GAP_Set_Adv_Data : 9,
-	GAP_Set_Connectable_Mode : 10,
+	GAP_Set_Directed_Connectable_Mode : 10,
 
 	// Hardware
 	HW_IO_Port_Config_IRQ : 0,
@@ -144,17 +150,78 @@ var _bgcommandIDs = {
 	DFU_Flash_Upload_Finish : 3
 }
 
-BGLib.prototype.EventNames = {
-	0 : [],
-	1 : [],
-	2 : [],
-	3 : [],
-	4 : [],
-	5 : [],
-	6 : [],
-	7 : ["portEventStatusChange"],
-}
+// BGLib.prototype.AD_Flags = {
+// 	GAP_AD_FLAG_LIMITED_DISCOVERABLE : 0x01,
+// 	GAP_AD_FLAG_GENERAL_DISCOVERABLE : 0x02,
+// 	GAP_AD_FLAG_BREDR_NOT_SUPPORTED : 0x04,
+// 	GAP_AD_FLAG_SIMULTANEOUS_LEBREDR_CTRL : 0x10,
+// 	GAP_AD_FLAG_SIMULTANEOUS_LEBREDR_HOST : 0x20,
+// 	GAP_AD_FLAG_MASK : 0x1f
+// }
 
+// BGLib.prototype.ADTypeFlags = {
+// 	gap_ad_type_none : 0,
+// 	gap_ad_type_flags : 1,
+// 	gap_ad_type_services_16bit_more : 2,
+// 	gap_ad_type_services_16bit_all : 3,
+// 	gap_ad_type_services_32bit_more : 4,
+// 	gap_ad_type_services_32bit_al : 5,
+// 	gap_ad_type_services_128bit_more : 6,
+// 	gap_ad_type_services_128bit_all : 7,
+// 	gap_ad_type_localname_short : 8,
+// 	gap_ad_type_localname_complete : 9,
+// 	gap_ad_type_txpower : 10,
+// }
+
+// BGLib.prototype.AdvertistingPolicy = {
+// 	gap_adv_policy_all : 0,
+// 	gap_adv_policy_whitelist_scan : 1,
+// 	gap_adv_policy_whitelist_connect : 2,
+// 	gap_adv_policy_whitelist_all : 3,
+// }
+// BGLib.prototype.AddressTypes = {
+// 	gap_address_type_public : 0,
+// 	gap_address_type_random : 1,
+// }
+
+
+
+// BGLib.prototype.GAPConnectableMode = {
+// 	gap_non_connectable : 0,
+// 	gap_directed_connectable : 1,
+// 	gap_undirected_connectable : 2,
+// 	gap_scannable_connectable : 3,
+// }
+
+// BGLib.prototype.GAPDiscoverableModes = {
+// 	gap_non_discoverable : 0,
+// 	gap_limited_discoverable : 1,
+// 	gap_general_discoverable : 2,
+// 	gap_broadcast : 3,
+// 	gap_user_data : 4,
+// 	gap_enhanced_broadcasting : 0x80,
+// }
+
+// BGLib.prototype.GAPDiscoverMode = {
+// 	gap_discover_limited : 0,
+// 	gap_discover_generic : 1,
+// 	gap_discover_observation : 2,
+// }
+
+// BGLib.prototype.Scan_Header_Flags = {
+// 	GAP_SCAN_HEADER_ADV_IND : 0,
+// 	GAP_SCAN_HEADER_ADV_DIRECT_IND : 1,
+// 	GAP_SCAN_HEADER_ADV_NONCONN_IND : 2,
+// 	GAP_SCAN_HEADER_SCAN_REQ : 3,
+// 	GAP_SCAN_HEADER_SCAN_RSP : 4,
+// 	GAP_SCAN_HEADER_CONNECT_REQ : 5,
+// 	GAP_SCAN_HEADER_ADV_DISCOVER_IND : 6,
+// }
+
+// BGLib.prototype.ScanPolicy = {
+// 	gap_scan_policy_all : 0,
+// 	gap_scan_policy_whitelist : 1
+// }
 function Packet(packetHeader, payload) {
 	this.packetHeader = packetHeader;
 	this.payload = payload;
@@ -211,12 +278,12 @@ function Payload(payloadArray) {
 
 Payload.prototype.payloadLengthHighBits = function() {
 	var size = this.getPayloadByteSize();
-	return getUpperBits(size);
+	return bitwise.getUpperBits(size);
 }
 
 Payload.prototype.payloadLengthLowBits = function() {
 	var size = this.getPayloadByteSize();
-	return getLowerBits(size);
+	return bitwise.getLowerBits(size);
 }
 
 Payload.prototype.getByteArray = function() {
@@ -229,7 +296,7 @@ Payload.prototype.getByteArray = function() {
 
 		if ((typeof payloadEntry == 'number') || (typeof payloadEntry == 'string')) {
 
-			var b = getByteVal(payloadEntry);
+			var b = bitwise.getUint8ByteVal(payloadEntry);
 
 			for (var eachObj in b) {
 				byteArray.push(b[eachObj]);
@@ -239,7 +306,7 @@ Payload.prototype.getByteArray = function() {
 		else if (Array.isArray(payloadEntry)) {
 			for (var j in payloadEntry) {
 
-				var b = getByteVal(payloadEntry[j]);
+				var b = bitwise.getUint8ByteVal(payloadEntry[j]);
 
 				for (var eachObj in b) {
 					byteArray.push(b[eachObj]);
@@ -255,175 +322,31 @@ Payload.prototype.getByteArray = function() {
 	return byteArray;
 }
 
-function getByteVal(obj) {
-	if (typeof obj == 'number') {
-		if (obj < 0) {
-			throw new Error("Cannot get number of bytes of negative number yet...");
-		}
-		return getBytesOfPositiveNumber(obj);
-	}
-	else if (typeof obj == 'string') {
-		return getBytesOfString(obj);
-	}
-	else {
-		throw new Error("You can only send numbers or strings...");
-	}
-}
 
 Payload.prototype.getPayloadByteSize = function() {
 	return this.getByteArray().length;
 }
 
-function getUpperBits(num) {
-	return num >> 8;
-}
-function getLowerBits(num) {
-	return num & 0xFF;
-}
-
-// Returns the actual bytes of a positive number
-function getBytesOfPositiveNumber(num) {
-
-	if (typeof num != 'number') {
-		throw new ArgumentException("Argument must be a number!");
-	}
-
-		if (num < 0) {
-		throw new ArgumentException("Argument must be a positive number!");
-	}
-
-	if (num == 0) return [0];
-
-	var bytes = [];
-
-	while (num != 0) {
-
-		bytes.push(num & 0xFF)
-		num = num >> 8;
-	}
-
-	return bytes;
-}
-
-// Returns the number of bytes needed to
-// construct a string
-function getBytesOfString(string) {
-
-	if (typeof(string) != "string") {
-		throw new ArgumentException("Argument must be a string!");
-	}
-
-	var bytes = [];
-
-	for (var i = 0; i < string.length; i++) {
-
-		bytes.push(string.charCodeAt(i));
-	}
-
-	return bytes;
-}
-
-// Returns the number of bytes needed to
-// construct a positive number
-function numberByteSize(number) {
-
-	return getBytesOfPositiveNumber(number).length;
-}
-
-function numberFromBytes(bytes) {
-
-	var num = 0;
-	for (var i in bytes) {
-		num += (bytes[i] << (i * 8))
-	}
-
-	return num;
-}
 
 function ArgumentException(message) {
 	this.name = "ArgumentException";
 	this.message = message;
 }
 
-function BGLib(packetMode) {
-	_bglibPMode = packetMode;
-} 
 
-var bgapiRXBuffer = [];
-var bgapiRXBufferPos = 0; 
-var bgapiRXDataLen = 0;
-
-var _bgResponseBoot = function(params) {
-	this.name = "boot";
-	this.dfu = params[0];
-}
-var _bgResponseHello = function(params) {
-	this.name = "hello";
-}
-
-var _bgResponseAddressGet = function(params) {
-	this.name = "addressGet";
-	this.address = [params[0], params[1], params[2], params[3], params[4], params[5]];
-
-	this.addressToString = function() {
-		var str = this.address[0].toString() + this.address[1].toString() +this.address[2].toString() + 
-			this.address[3].toString() + this.address[4].toString() + this.address[5].toString();
-		return str;
-	}
-}
-/*	
-	System_Reg_Write : 3,
-	System_Reg_Read : 4,
-	System_Get_Counters : 5,
-	System_Get_Connections: 6,
-	System_Read_Memory : 7,
-	System_Get_Info : 8,
-	System_Endpoint_Tx : 9,
-	System_Whitelist_Append : 10,
-	System_Whitelist_Remove : 11,
-	System_Whitelist_Clear : 12,
-	System_Endpoint_Rx : 13,
-	System_Set_Watermarks : 14,*/
-
-var _bgResponseRegisterWrite = function(params) {
-
-}
-
-
-BGLib.prototype.Responses = {
-	0 : [_bgResponseReset, _bgResponseHello, _bgResponseAddressGet],
-}
-
-
-
-var _bgEventPortStatusChange = function(params){
-	this.name = "portStatusChange";
-	this.timestamp = numberFromBytes([params[0], params[1], params[2], params[3]])
-	this.port = params[4];
-	this.irq = params[5];
-	this.state = params[6];
-}	
-
-BGLib.prototype.Events = {
-	7 : [_bgEventPortStatusChange],
-}
-
-BGLib.prototype.EventNames = {
-	0 : [],
-	1 : [],
-	2 : [],
-	3 : [],
-	4 : [],
-	5 : [],
-	6 : [],
-	7 : ["portEventStatusChange"],
-}
 
 var ParsedPacket = function(packet, responseType, response) {
 	this.packet = packet;
 	this.responseType = responseType;
 	this.response = response;
 }
+
+function BGLib(packetMode) {
+	_bglibPMode = packetMode;
+	this.bgapiRXBuffer = [];
+	this.bgapiRXBufferPos = 0; 
+	this.bgapiRXDataLen = 0;
+} 
 
 
 BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
@@ -460,9 +383,11 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 			if ((packet.packetHeader.mType & 0x80) == 0x80) {
 
 				if (DEBUG) console.log("We have an event!");
-				// Create the event object
-				data = new self.Events[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
 
+				// Create the event object
+				data = new libEvent.Events[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
+
+				
 				// Add the parsed packet to the return array
 				parsedReturn.push(new ParsedPacket(packet, "Event", data));
 
@@ -470,7 +395,7 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 			} else if ((packet.packetHeader.mType & 0x80) == 0x00) {
 
 				// Create the response object
-				data = new self.Responses[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
+				data = new libRes.Responses[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
 
 				// Add the parsed packet to the array
 				parsedReturn.push(new ParsedPacket(packet, "Response", data));
@@ -498,40 +423,40 @@ BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 		var ch = incomingBytes[i];
 
-		if (bgapiRXBufferPos == 0) {
+		if (this.bgapiRXBufferPos == 0) {
 			// beginning of packet, check for correct framing/expected byte(s)
 			// BGAPI packet for Bluetooth Smart Single Mode must be either Command/Response (0x00) or Event (0x80)
 			if ((ch & 0x78) == 0x00) {
 				// store new character in RX buffer
-				bgapiRXBuffer[bgapiRXBufferPos++] = ch;
+				this.bgapiRXBuffer[this.bgapiRXBufferPos++] = ch;
 			} else {
 				 callback(new Error("Packet Frame Error"), null); // packet format error
 			}
 		} 
 		else {
 
-			bgapiRXBuffer[bgapiRXBufferPos++] = ch;
+			this.bgapiRXBuffer[this.bgapiRXBufferPos++] = ch;
 
-			if (bgapiRXBufferPos == 2) {
+			if (this.bgapiRXBufferPos == 2) {
 				// just received "Length Low" byte, so store expected packet length
-				bgapiRXDataLen = ch + ((bgapiRXBuffer[0] & 0x03) << 8);
+				this.bgapiRXDataLen = ch + ((this.bgapiRXBuffer[0] & 0x03) << 8);
 			}
-			else if (bgapiRXBufferPos == bgapiRXDataLen + 4) {
+			else if (this.bgapiRXBufferPos == this.bgapiRXDataLen + 4) {
 				// just received last expected bytes
 				// reset RX packet buffer position to be ready for new packet
-				bgapiRXBufferPos = 0;
+				this.bgapiRXBufferPos = 0;
 
 
 				// Set up the header
-				var type_hilen = bgapiRXBuffer[0];
-				var lolen = bgapiRXBuffer[1];
-				var cls = bgapiRXBuffer[2];
-				var command = bgapiRXBuffer[3];
+				var type_hilen = this.bgapiRXBuffer[0];
+				var lolen = this.bgapiRXBuffer[1];
+				var cls = this.bgapiRXBuffer[2];
+				var command = this.bgapiRXBuffer[3];
 
 				var payloadData = [];
 				// Set the data bits
 				for (var j = 0; j < lolen; j++) {
-					payloadData[j] = bgapiRXBuffer[4 + j];
+					payloadData[j] = this.bgapiRXBuffer[4 + j];
 				}
 
 				var payload = new Payload(payloadData);
@@ -541,14 +466,6 @@ BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 				var packet = new Packet(header, payload);
 
 				packets.push(packet);
-
-				// const struct ble_msg *msg = ble_get_msg_hdr(hdr);
-
-				// if (!msg) {
-				// 	return -1;
-				// }
-
-				// msg->handler(data);
 			}
 
 		}
@@ -593,7 +510,7 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 				case 6:
 
 					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(numberIntoByteArray(param, 4));
+					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 4));
 
 					break;
 
@@ -602,16 +519,15 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 				case 4:
 
 					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(numberIntoByteArray(param, 2));
+					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 2));
 
 					break;
 
 				// This parameter is 8 bits
 				case 3:
 				case 2:
-
 					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(numberIntoByteArray(param, 1));
+					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 1));
 
 					break
 				// This parameter is a data length and uint8 array
@@ -641,8 +557,8 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 
 					var data_len = param;
 
-					payloadBytes.push(getLowerBits(data_len));
-					payloadBytes.push(getUpperBits(data_len));
+					payloadBytes.push(bitwise.getLowerBits(data_len));
+					payloadBytes.push(bitwise.getUpperBits(data_len));
 
 					var totalPacketSize = data_len + command.header.payloadLowBits;
 					command.header.payloadLowBits = getLowerBits(totalPacketSize);
@@ -698,67 +614,123 @@ BGLib.prototype.verifyParams = function(paramCode, params, callback) {
 	}
 }
 
-function numberIntoByteArray(number, numBytes) {
-
-	var byteArray = [];
-
-	for (var i = 0; i < numBytes; i++) {
-		byteArray.push(number & 0xFF);
-		number >> 8;
-	}
-	return byteArray;
+BGLib.prototype.getEventName = function(eventClass, eventCommand){
+	return libEvent.EventNames[eventClass][eventCommand];
 }
-
-BGLib.prototype.getEventName = function(eventPacket, callback) {
-
-}
-
 
 BGLib.prototype.api = {
 
 	// System
-	reset : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reset}, paramCode: 0x02},
-	hello : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Hello}, paramCode: 0x00},
-	addressGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Address_Get}, paramCode: 0x00},
-	registerWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x24},
-	registerRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Read}, paramCode: 0x04},
-	getCounters : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Counters}, paramCode: 0x00},
-	getConnections : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Connections}, paramCode: 0x00},
-	readMemory : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Read_Memory}, paramCode: 0x26},
-	getInfo : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Info}, paramCode: 0x00},
-	endpointTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Tx}, paramCode: 0x82},
-	whitelistAppend : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Append}, paramCode: 0x2a},
-	whitelistRemove : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Remove}, paramCode: 0x2a},
-	whiteListClear : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Clear}, paramCode: 0x00},
-	endpointRx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Rx}, paramCode: 0x22},
-	endpointSetWatermarks : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x222},
+	systemReset : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reset}, paramCode: 0x02},
+	systemHello : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Hello}, paramCode: 0x00},
+	systemAddressGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Address_Get}, paramCode: 0x00},
+	systemRegisterWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x24},
+	systemRegisterRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Read}, paramCode: 0x04},
+	systemGetCounters : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Counters}, paramCode: 0x00},
+	systemGetConnections : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Connections}, paramCode: 0x00},
+	systemReadMemory : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Read_Memory}, paramCode: 0x26},
+	systemGetInfo : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Info}, paramCode: 0x00},
+	systemEndpointTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Tx}, paramCode: 0x82},
+	systemWhitelistAppend : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Append}, paramCode: 0x2a},
+	systemWhitelistRemove : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Remove}, paramCode: 0x2a},
+	systemWhiteListClear : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Clear}, paramCode: 0x00},
+	systemEndpointRx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Rx}, paramCode: 0x22},
+	systemEndpointSetWatermarks : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x222},
 
-	// 
-	attributeWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, cid : 0x2}, paramCode: 0x022},
+	// Persistent Storage
+	// psDefrag : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Defrag}, paramCode: 0x00},
+	// psDump : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Dump}, paramCode: 0x00},
+	// psEraseAll : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Erase_All}, paramCode: 0x00},
+	// psSave : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Save}, paramCode: 0x04},
+	// psLoad : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Load}, paramCode: 0x84},
+	// psErase : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_PS_Erase}, paramCode: 0x00},
+	// flashErasePage : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_Erase_Page}, paramCode: 0x04},
+	// flashWriteWords : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_Write_Words}, paramCode: 0x00},
+
+	// // Attribute Database
+	// attributesWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Write}, paramCode: 0x04},
+	// attributesRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Read}, paramCode: 0x8444},
+	// attributesReadType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Read_Type}, paramCode: 0x8444},	
+	// attributesUserReadResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_User_Read_Response}, paramCode: 0x00},
+	// attributesUserWriteResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_User_Write_Response}, paramCode: 0x00},
+
+	// // Connection
+	// connectionDisconnect : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Disconnect}, paramCode: 0x42},
+	// connectionGetRSSI : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_RSSI}, paramCode: 0x32},
+	// connectionUpdate : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Update}, paramCode: 0x42},
+	// connectionVersion : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Version_Update}, paramCode: 0x42},
+	// connectionChannelMapGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Channel_Map_Get}, paramCode: 0x82},
+	// connectionChannelMapSet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Channel_Map_Set}, paramCode: 0x42},
+	// connectionFeaturesGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Features_Get}, paramCode: 0x42},
+	// connectionGetStatus : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_Status}, paramCode: 0x02},
+	// connectionRawTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Raw_Tx}, paramCode: 0x02},
+
+	// // Attribute Client
+	// attClientFindByTypeValue : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_By_Type_Value}, paramCode: 0x42},
+	// attClientReadByGroupType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Group_Type}, paramCode: 0x42},
+	// attClientReadByType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, cid : _bgcommandIDs.Attclient_Read_By_Type}, paramCode: 0x42},
+	// attClientFindInformation : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_Information}, paramCode: 0x42},
+	// attClientReadByHandle : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Handle}, paramCode: 0x42},
+	// attClientAttributeWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Attribute_Write}, paramCode: 0x42},
+	// attClientWriteCommand : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Write_Command}, paramCode: 0x42},
+	// attClientIndicateConfirm : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Indicate_Confirm}, paramCode: 0x04},
+	// attClientReadLong : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_Long}, paramCode: 0x42},
+	// attClientPrepareWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Prepare_Write}, paramCode: 0x42},
+	// attClientReadMultiple : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_Multiple}, paramCode: 0x42},
+
+	// // Security Manager
+	// smEncryptStart : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Encrypt_Start}, paramCode: 0x42},
+	// smSetBondableMode : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Set_Bondable_Mode}, paramCode: 0x00},
+	// smDeleteBonding : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Delete_Bonding}, paramCode: 0x04},
+	// smSetParameters : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Set_Parameters}, paramCode: 0x00},
+	// smPasskeyEntry : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Passkey_Entry}, paramCode: 0x04},
+	// smGetBonds : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Get_Bonds}, paramCode: 0x02},
+	// smSetOOBData: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.SecurityManager, command : _bgcommandIDs.SM_Set_OOB_Data}, paramCode: 0x00},
+
+	// GAP
+	gapSetPrivacyFlags: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Privacy_Flags}, paramCode: 0x00},
+	gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
+	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x04},	
+	gapConnectDirect: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Direct}, paramCode: 0x24},
+	getEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x04},
+	gapConnectSelective: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Selective}, paramCode: 0x24},
+	gapSetFiltering: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Filtering}, paramCode: 0x04},
+	gapSetScanParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Scan_Parameters}, paramCode: 0x04},
+	gapSetAdvParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Parameters}, paramCode: 0x04},
+	gapSetAdvData: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Data}, paramCode: 0x04},
+	gapSetDirectedConnectable: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Directed_Connectable_Mode}, paramCode: 0x04},
+
+	// // Hardware
+	// hwIOPortConfigIRQ: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_IRQ}, paramCode: 0x04},
+	// hwSetSoftTimer: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_Set_Soft_Timer}, paramCode: 0x04},
+	// hwADCReadID: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_ADC_Read}, paramCode: 0x04},
+	// hwIOPortConfigDirection: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Direction}, paramCode: 0x04},
+	// hwIOPortConfigFunction: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Function}, paramCode: 0x04},
+	// hwIOPortConfigPull: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Pull}, paramCode: 0x04},
+	// hwIOPortWrite: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Write}, paramCode: 0x04},
+	// hwIOPortRead: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Read}, paramCode: 0x224},
+	// hwSPIConfig: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_SPI_Config}, paramCode: 0x04},
+	// hwSPITransfer: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_SPI_Transfer}, paramCode: 0x824},
+	// hwI2CRead: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_I2C_Read}, paramCode: 0x84},
+	// hwI2CWrite: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_I2C_Write}, paramCode: 0x02},
+	// hwSetTxPower: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_Set_Tx_Power}, paramCode: 0x00},
+	// hwTimerComparator: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_Timer_Comparator}, paramCode: 0x04},
+
+	// // Test
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Phy_Tx}, paramCode: 0x00},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Phy_Rx}, paramCode: 0x00},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Phy_End}, paramCode: 0x04},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Phy_Reset}, paramCode: 0x00},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Get_Channel_Map}, paramCode: 0x08},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Debug}, paramCode: 0x00},
+	// testPhyTx: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Test, command : _bgcommandIDs.Test_Channel_Mode}, paramCode: 0x00},
+
+	// // DFU
+	// dfuReset: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Reset}, paramCode: 0x00},
+	// dfuReset: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Flash_Set_Address}, paramCode: 0x04},
+	// dfuReset: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Flash_Upload}, paramCode: 0x04},
+	// dfuReset: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Flash_Upload_Finish}, paramCode: 0x04},
 }
-
-// Testing area
-// var lib = new BGLib(PACKET_MODE);
-// // console.log(lib.Events);
-// // console.log(lib.Responses[System]);
-// lib.parseIncoming([0x80, 0x07, 0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x01, 0x10, 0x10, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], function(err, responses) {
-// 	if (err) throw err;
-
-// 	for (var i in responses) {
-// 		console.log("Packet Parsed: ", responses[i]);
-// 	}
-
-// 	lib.parseIncoming([0, 1], function(err, responses) {
-// 		if (err) throw err;
-
-// 		for (var i in responses) {
-// 			console.log("More Packets Parsed: ", responses[i]);
-// 		}
-// 	});
-// });
-
-
-
 
 module.exports.BGLib = BGLib;
 module.exports.PACKET_MODE = PACKET_MODE;
