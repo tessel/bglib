@@ -150,6 +150,66 @@ var _bgcommandIDs = {
 	DFU_Flash_Upload_Finish : 3
 }
 
+//	// System Enumerations
+// BGLib.prototype.Endpoints = {
+// 	system_endpoint_api : 0,
+// 	system_endpoint_test : 1,
+// 	system_endpoint_script : 2,
+// 	system_endpoint_usb : 3,
+// 	system_endpoint_uart0 : 4,
+// 	system_endpoint_uart1 : 5,
+// }
+
+// 	// Attribute Database Enumerations
+// BGLib.prototype.AttributeChangeReason = {
+// 	attributes_attribute_change_reason_write_request : 0,
+// 	attributes_attribute_change_reason_write_command : 1,
+// 	attributes_attribute_change_reason_write_request_user : 2,
+// }
+
+// BGLib.prototype.AttributeStatusFlags = {
+// 	attributes_attribute_status_flag_notify : 1,
+// 	attributes_attribute_status_flag_indicate : 2,
+// }
+
+//	// Connection Enumerations
+// BGLib.prototype.ConnectionStatus = {
+// 	connection_connected : 1,
+// 	connection_encrypted : 1 << 1,
+// 	connection_completed : 1 << 2,
+// 	connection_parameters_change : 1 << 3,
+// }
+
+// 	// Attribute Client Enumerations
+// BGLib.prototype.AttributeValueType = {
+// 	attclient_attribute_value_type_read : 0,
+// 	attclient_attribute_value_type_notify : 1,
+// 	attclient_attribute_value_type_indicate : 2,
+// 	attclient_attribute_value_type_read_by_type : 3,
+// 	attclient_attribute_value_type_read_blob : 4,
+// 	attclient_attribute_value_type_indicate_rsp_req : 5,
+// }
+
+// 	// Security Manager Enumerations
+// BGLib.prototype.BondingKeys = {
+// 	sm_bonding_key_ltk : 0x01,
+// 	sm_bonding_key_addr_public : 0x02,
+// 	sm_bonding_key_addr_static : 0x04,
+// 	sm_bonding_key_irk : 0x08,
+// 	sm_bonding_key_edivrand : 0x10,
+// 	sm_bonding_key_csrk : 0x20,
+// 	sm_bonding_key_masterid : 0x40,
+// }
+
+// BGLib.prototype.SMPIO = {
+// 	sm_io_capability_displayonly : 0,
+// 	sm_io_capability_displayyesno : 1,
+// 	sm_io_capability_keyboardonly : 2,
+// 	sm_io_capability_noinputnooutput : 3,
+// 	sm_io_capability_keyboarddisplay : 4,
+// }
+
+//	// GAP Enumerations
 // BGLib.prototype.AD_Flags = {
 // 	GAP_AD_FLAG_LIMITED_DISCOVERABLE : 0x01,
 // 	GAP_AD_FLAG_GENERAL_DISCOVERABLE : 0x02,
@@ -179,12 +239,11 @@ var _bgcommandIDs = {
 // 	gap_adv_policy_whitelist_connect : 2,
 // 	gap_adv_policy_whitelist_all : 3,
 // }
-// BGLib.prototype.AddressTypes = {
+
+// BGLib.prototype.BluetoothAddressTypes = {
 // 	gap_address_type_public : 0,
 // 	gap_address_type_random : 1,
 // }
-
-
 
 // BGLib.prototype.GAPConnectableMode = {
 // 	gap_non_connectable : 0,
@@ -208,7 +267,7 @@ var _bgcommandIDs = {
 // 	gap_discover_observation : 2,
 // }
 
-// BGLib.prototype.Scan_Header_Flags = {
+// BGLib.prototype.SCAN_HEADER_FLAGS = {
 // 	GAP_SCAN_HEADER_ADV_IND : 0,
 // 	GAP_SCAN_HEADER_ADV_DIRECT_IND : 1,
 // 	GAP_SCAN_HEADER_ADV_NONCONN_IND : 2,
@@ -222,6 +281,7 @@ var _bgcommandIDs = {
 // 	gap_scan_policy_all : 0,
 // 	gap_scan_policy_whitelist : 1
 // }
+
 function Packet(packetHeader, payload) {
 	this.packetHeader = packetHeader;
 	this.payload = payload;
@@ -362,8 +422,6 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 		// 	console.log("Packets: ", packets);
 		// 	console.log("Payload: ", packets[0].payload);
 		// }
-
-
 		var parsedReturn = [];
 
 		if (err) {
@@ -387,12 +445,13 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 				// Create the event object
 				data = new libEvent.Events[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
 
-				
 				// Add the parsed packet to the return array
 				parsedReturn.push(new ParsedPacket(packet, "Event", data));
 
 			// If it was a response
 			} else if ((packet.packetHeader.mType & 0x80) == 0x00) {
+
+				if (DEBUG) console.log("We have a response!");
 
 				// Create the response object
 				data = new libRes.Responses[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
@@ -623,19 +682,19 @@ BGLib.prototype.api = {
 	// System
 	systemReset : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reset}, paramCode: 0x02},
 	systemHello : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Hello}, paramCode: 0x00},
-	systemAddressGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Address_Get}, paramCode: 0x00},
-	systemRegisterWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x24},
-	systemRegisterRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Read}, paramCode: 0x04},
-	systemGetCounters : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Counters}, paramCode: 0x00},
-	systemGetConnections : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Connections}, paramCode: 0x00},
-	systemReadMemory : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Read_Memory}, paramCode: 0x26},
-	systemGetInfo : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Info}, paramCode: 0x00},
-	systemEndpointTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Tx}, paramCode: 0x82},
-	systemWhitelistAppend : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Append}, paramCode: 0x2a},
-	systemWhitelistRemove : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Remove}, paramCode: 0x2a},
-	systemWhiteListClear : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Clear}, paramCode: 0x00},
-	systemEndpointRx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Rx}, paramCode: 0x22},
-	systemEndpointSetWatermarks : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x222},
+	// systemAddressGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Address_Get}, paramCode: 0x00},
+	// systemRegisterWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x24},
+	// systemRegisterRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Read}, paramCode: 0x04},
+	// systemGetCounters : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Counters}, paramCode: 0x00},
+	// systemGetConnections : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Connections}, paramCode: 0x00},
+	// systemReadMemory : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Read_Memory}, paramCode: 0x26},
+	// systemGetInfo : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Get_Info}, paramCode: 0x00},
+	// systemEndpointTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Tx}, paramCode: 0x82},
+	// systemWhitelistAppend : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Append}, paramCode: 0x2a},
+	// systemWhitelistRemove : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Remove}, paramCode: 0x2a},
+	// systemWhiteListClear : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Whitelist_Clear}, paramCode: 0x00},
+	// systemEndpointRx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Endpoint_Rx}, paramCode: 0x22},
+	// systemEndpointSetWatermarks : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reg_Write}, paramCode: 0x222},
 
 
 	// Persistent Storage
@@ -695,13 +754,13 @@ BGLib.prototype.api = {
 	gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
 	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x02},	
 	gapConnectDirect: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Direct}, paramCode: 0x44442a},
-	getEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x00},
-	gapConnectSelective: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Selective}, paramCode: 0x4444},
-	gapSetFiltering: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Filtering}, paramCode: 0x222},
-	gapSetScanParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Scan_Parameters}, paramCode: 0x244},
-	gapSetAdvParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Parameters}, paramCode: 0x244},
-	gapSetAdvData: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Data}, paramCode: 0x82},
-	gapSetDirectedConnectable: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Directed_Connectable_Mode}, paramCode: 0x2a},
+	gapEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x00},
+	// gapConnectSelective: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Selective}, paramCode: 0x4444},
+	// gapSetFiltering: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Filtering}, paramCode: 0x222},
+	// gapSetScanParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Scan_Parameters}, paramCode: 0x244},
+	// gapSetAdvParameters: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Parameters}, paramCode: 0x244},
+	// gapSetAdvData: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Adv_Data}, paramCode: 0x82},
+	// gapSetDirectedConnectable: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Directed_Connectable_Mode}, paramCode: 0x2a},
 
 	// // Hardware
 	// hwIOPortConfigIRQ: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_IRQ}, paramCode: 0x222},
