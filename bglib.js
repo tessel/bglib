@@ -7,7 +7,7 @@ var _bglibPMode;
 var PACKET_MODE = 1;
 var FLOW_CONTROL = 0;
 
-var DEBUG = 1;
+var DEBUG = 0;
 
 var _bgmessageType = {
 	Command : 0 << 7,
@@ -240,10 +240,10 @@ var _bgcommandIDs = {
 // 	gap_adv_policy_whitelist_all : 3,
 // }
 
-// BGLib.prototype.BluetoothAddressTypes = {
-// 	gap_address_type_public : 0,
-// 	gap_address_type_random : 1,
-// }
+BGLib.prototype.BluetoothAddressTypes = {
+	gap_address_type_public : 0,
+	gap_address_type_random : 1,
+}
 
 // BGLib.prototype.GAPConnectableMode = {
 // 	gap_non_connectable : 0,
@@ -261,11 +261,11 @@ var _bgcommandIDs = {
 // 	gap_enhanced_broadcasting : 0x80,
 // }
 
-// BGLib.prototype.GAPDiscoverMode = {
-// 	gap_discover_limited : 0,
-// 	gap_discover_generic : 1,
-// 	gap_discover_observation : 2,
-// }
+BGLib.prototype.GAPDiscoverMode = {
+	gap_discover_limited : 0,
+	gap_discover_generic : 1,
+	gap_discover_observation : 2,
+}
 
 // BGLib.prototype.SCAN_HEADER_FLAGS = {
 // 	GAP_SCAN_HEADER_ADV_IND : 0,
@@ -300,7 +300,6 @@ Packet.prototype.getByteArray = function(callback) {
 
 	// Grab the packet header byte array
 	packetBytes = packetBytes.concat(this.packetHeader.getByteArray());
-
 	// Grab the payload byte array
 	packetBytes = packetBytes.concat(this.payload.getByteArray());
 
@@ -411,22 +410,17 @@ function BGLib(packetMode) {
 
 BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
-	// Temporary until bind is working
 	var self = this;
 
 	// Parse and put packets back together
 	this.reconstructPackets(incomingBytes, function(err, packets) {
 
-		// if (DEBUG) {
-		// 	console.log("We have ", packets.length, " packets.");
-		// 	console.log("Packets: ", packets);
-		// 	console.log("Payload: ", packets[0].payload);
-		// }
+		// Array for parsed responses/events
 		var parsedReturn = [];
 
 		if (err) {
-			console.log("There was an issue constructing the packet...");
-			callback && callback(err, null);
+			console.log("There was an issue constructing a packet...");
+			return callback && callback(err, null);
 		}
 
 		// For each packet
@@ -434,7 +428,9 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 			// Parse the response into appropriate Params
 			var packet = packets[i];
-
+			// console.log("packets: ", packets);
+			// console.log("packet in", i);
+			// console.log("packet", packet);
 			var data;
 
 			// If this packet is an event
@@ -442,22 +438,42 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 				if (DEBUG) console.log("We have an event!");
 
-				// Create the event object
-				data = new libEvent.Events[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
+				try {
+					var eventCreator;
+					if ((eventCreator=libEvent.Events[packet.packetHeader.cClass][packet.packetHeader.cID])) {
+						// Create the event object
+					data = new eventCreator(packet.payload.rawPayload);
 
-				// Add the parsed packet to the return array
-				parsedReturn.push(new ParsedPacket(packet, "Event", data));
-
+					// Add the parsed packet to the return array
+					 parsedReturn.push(new ParsedPacket(packet, "Event", data));
+					} else {
+						throw new Error("No existing event creator for packet of class " + packet.packetHeader.cClass + " and command id " +  packet.packetHeader.cID);
+					}
+				} catch (e) {
+					// Eventually do something smarter here
+					return console.log(e);
+				}
 			// If it was a response
 			} else if ((packet.packetHeader.mType & 0x80) == 0x00) {
 
 				if (DEBUG) console.log("We have a response!");
+				if (DEBUG) console.log("Class: ", packet.packetHeader.cClass, "command", packet.packetHeader.cID);
 
 				// Create the response object
-				data = new libRes.Responses[packet.packetHeader.cClass][packet.packetHeader.cID](packet.payload.rawPayload);
+				try {
+					var responseCreator; 
+					if ((responseCreator = libRes.Responses[packet.packetHeader.cClass][packet.packetHeader.cID])) {
+						data = new responseCreator(packet.payload.rawPayload);
 
-				// Add the parsed packet to the array
-				parsedReturn.push(new ParsedPacket(packet, "Response", data));
+						// Add the parsed packet to the array
+						parsedReturn.push(new ParsedPacket(packet, "Response", data));
+					} else {
+						throw new Error("No existing response creator for packet of class " + packet.packetHeader.cClass + " and command id " +  packet.packetHeader.cID);
+					}
+				} catch (e) {
+					// Eventually do something smarter here
+					return console.log(e);
+				}
 
 			} else {
 				if (DEBUG) console.log("What's up with this mType?: ", packet.packetHeader.mType);
@@ -475,29 +491,42 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
+	if (!incomingBytes) callback(new Error("No bytes passed into packet reconstruction"));
+
 	var packets = [];
 
 	// Create the packets
 	for (var i = 0; i < incomingBytes.length; i++) {
 
+		// Gran the next byte
 		var ch = incomingBytes[i];
 
+		// If this is the beginning of the packet
 		if (this.bgapiRXBufferPos == 0) {
-			// beginning of packet, check for correct framing/expected byte(s)
+			// check for correct framing/expected byte(s)
 			// BGAPI packet for Bluetooth Smart Single Mode must be either Command/Response (0x00) or Event (0x80)
-			if ((ch & 0x78) == 0x00) {
+			if ((ch == 0x80) || (ch == 0x00)) {
+
 				// store new character in RX buffer
 				this.bgapiRXBuffer[this.bgapiRXBufferPos++] = ch;
+				// If not, something screwy happened
 			} else {
-				 callback(new Error("Packet Frame Error"), null); // packet format error
+				// console.log("Warning: Packet Frame Issue.");
+
+				// return;
+				continue;
 			}
 		} 
+		// If this is not the first byte of the packet
 		else {
 
+			// Add the byte to the rx Buffer
 			this.bgapiRXBuffer[this.bgapiRXBufferPos++] = ch;
 
+			// If this is the "length" byte
 			if (this.bgapiRXBufferPos == 2) {
-				// just received "Length Low" byte, so store expected packet length
+
+				// store expected packet length so we know when this packet is complete
 				this.bgapiRXDataLen = ch + ((this.bgapiRXBuffer[0] & 0x03) << 8);
 			}
 			else if (this.bgapiRXBufferPos == this.bgapiRXDataLen + 4) {
@@ -514,7 +543,11 @@ BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 				var payloadData = [];
 				// Set the data bits
-				for (var j = 0; j < lolen; j++) {
+
+				// We may have pulled misformed packets and we
+				// need to make sure that we don't over index;
+				var payloadLen = (lolen > (this.bgapiRXBuffer.length - 4) ? (this.bgapiRXBuffer.length - 4) : lolen);
+				for (var j = 0; j < payloadLen; j++) {
 					payloadData[j] = this.bgapiRXBuffer[4 + j];
 				}
 
@@ -524,7 +557,13 @@ BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 				var packet = new Packet(header, payload);
 
-				packets.push(packet);
+				// If we successfully created the packet
+				if (packet) {
+					packets.push(packet);
+					if (DEBUG) console.log("added packet: ", packet);
+				} else {
+					console.log('Warning, packet creation was obstructed somehow.');
+				}
 			}
 
 		}
@@ -550,7 +589,7 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 
 		// There's a problem with the params passed in.
 		if (err) {	
-			callback(err, null);
+			return callback(err, null);
 		}
 
 		var paramCode = command.paramCode;
@@ -608,8 +647,8 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 
 				// This parameter is a hardware address
 				case 10:
-
 					payloadBytes = payloadBytes.concat(param);
+					break;
 
 				// uint16 array (and data length)
 				case 11:
@@ -625,6 +664,7 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 
 					param = params.shift();
 					payloadBytes.push(param);
+					break;
 			}
 
 			paramCode  = paramCode >> 4;
@@ -750,8 +790,8 @@ BGLib.prototype.api = {
 
 
 	// GAP
-	gapSetPrivacyFlags: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Privacy_Flags}, paramCode: 0x22},
-	gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
+	// gapSetPrivacyFlags: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Privacy_Flags}, paramCode: 0x22},
+	// gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
 	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x02},	
 	gapConnectDirect: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Direct}, paramCode: 0x44442a},
 	gapEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x00},

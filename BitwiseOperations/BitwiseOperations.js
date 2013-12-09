@@ -6,7 +6,7 @@ function getLowerBits(num) {
 }
 
 // Returns the actual bytes of a positive number
-function getUint8BytesOfPositiveNumber(num) {
+function getUint8BytesOfNumber(num) {
 
 	if (typeof num != 'number') {
 		throw new ArgumentException("Argument must be a number!");
@@ -51,7 +51,7 @@ function getBytesOfString(string) {
 // construct a positive number
 function numberUint8ByteSize(number) {
 
-	return getUint8BytesOfPositiveNumber(number).length;
+	return getUint8BytesOfNumber(number).length;
 }
 
 function numberFromUint8Bytes(bytes) {
@@ -88,7 +88,7 @@ function getUint8ByteVal(obj) {
 		if (obj < 0) {
 			throw new Error("Cannot get number of bytes of negative number yet...");
 		}
-		return getUint8BytesOfPositiveNumber(obj);
+		return getUint8BytesOfNumber(obj);
 	}
 	else if (typeof obj == 'string') {
 		return getBytesOfString(obj);
@@ -100,8 +100,8 @@ function getUint8ByteVal(obj) {
 
 module.exports.getUpperBits = getUpperBits;
 module.exports.getLowerBits = getLowerBits;
-module.exports.getUint8BytesOfPositiveNumber = getUint8BytesOfPositiveNumber;
 module.exports.getBytesOfString = getBytesOfString;
+module.exports.getUint8BytesOfNumber = getUint8BytesOfNumber;
 module.exports.numberUint8ByteSize = numberUint8ByteSize;
 module.exports.numberFromUint8Bytes = numberFromUint8Bytes;
 module.exports.numberIntoNLengthByteArray = numberIntoNLengthByteArray;

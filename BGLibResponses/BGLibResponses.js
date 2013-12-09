@@ -241,32 +241,32 @@ var _bgResponseGAPSetMode = function(params) {
 var _bgResponseGAPDiscover= function(params) {
 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
 }
-// var _bgResponseGAPConnectDirect = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// 	this.connection_handle = params[2];
-// }
-// var _bgResponseGAPEndProcedure = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
-// var _bgResponseGAPConnectSelective = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// 	this.connection_handle = params[2];
-// }
-// var _bgResponseGAPSetFiltering = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
-// var _bgResponseGAPSetScanParameters = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
-// var _bgResponseGAPSetAdvParameters = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
-// var _bgResponseGAPSetAdvData = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
-// var _bgResponseGAPSetDirectedConnectableMode = function(params) {
-// 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
-// }
+var _bgResponseGAPConnectDirect = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+	this.connection_handle = params[2];
+}
+var _bgResponseGAPEndProcedure = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
+var _bgResponseGAPConnectSelective = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+	this.connection_handle = params[2];
+}
+var _bgResponseGAPSetFiltering = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
+var _bgResponseGAPSetScanParameters = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
+var _bgResponseGAPSetAdvParameters = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
+var _bgResponseGAPSetAdvData = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
+var _bgResponseGAPSetDirectedConnectableMode = function(params) {
+	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
+}
 
 // /***************************************
 // *			Hardware
@@ -395,8 +395,8 @@ var Responses = {
 //  _bgResponseSMPasskeyEntry, _bgResponseSMGetBonds, _bgResponseSMSetOOBData],
 
 //  	// GAP Responses
-	6 	: 	[_bgResponseGAPSetPrivacyFlags, _bgResponseGAPSetMode, _bgResponseGAPDiscover],
-//  _bgResponseGAPConnectDirect, _bgResponseGAPEndProcedure, _bgResponseGAPConnectSelective,
+	6 	: 	[_bgResponseGAPSetPrivacyFlags, _bgResponseGAPSetMode, _bgResponseGAPDiscover,
+ _bgResponseGAPConnectDirect, _bgResponseGAPEndProcedure, _bgResponseGAPConnectSelective],
 //  _bgResponseGAPSetFiltering, _bgResponseGAPSetScanParameters, _bgResponseGAPSetAdvParameters, 
 //  _bgResponseGAPSetAdvData, _bgResponseGAPSetDirectedConnectableMode],
 

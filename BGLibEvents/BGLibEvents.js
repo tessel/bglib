@@ -1,17 +1,17 @@
 var bitwise = require('../BitwiseOperations/BitwiseOperations');
 
-// /***************************************
-// *		SYSTEM Events
-// ****************************************/ 
-// var _bgEventSystemBoot = function(params) {
-// 	this.major = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// 	this.minor = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-// 	this.patch = bitwise.numberFromUint8Bytes([params[4], params[5]]);
-// 	this.build = bitwise.numberFromUint8Bytes([params[6], params[7]]);
-// 	this.ll_version = bitwise.numberFromUint8Bytes([params[8], params[9]]);
-// 	this.protocol_version = params[10];
-// 	this.hw = params[11];
-// }
+/***************************************
+*		SYSTEM Events
+****************************************/ 
+var _bgEventSystemBoot = function(params) {
+	this.major = bitwise.numberFromUint8Bytes([params[0], params[1]]);
+	this.minor = bitwise.numberFromUint8Bytes([params[2], params[3]]);
+	this.patch = bitwise.numberFromUint8Bytes([params[4], params[5]]);
+	this.build = bitwise.numberFromUint8Bytes([params[6], params[7]]);
+	this.ll_version = bitwise.numberFromUint8Bytes([params[8], params[9]]);
+	this.protocol_version = params[10];
+	this.hw = params[11];
+}
 // var _bgEventSystemDebug = function(params) {
 // 	this.data = params[0];
 // }
@@ -162,15 +162,15 @@ var bitwise = require('../BitwiseOperations/BitwiseOperations');
 // 	this.keys = params[3];
 // }
 /***************************************
-*		Hardware Events
+*		GAP Events
 ****************************************/ 
 var _bgEventGAPScanResponse = function(params) {
-	this.rssi = params[0];
+	this.rssi = params[0] > 127 ? params[0] - 128 : params[0];
 	this.packet_type = params[1];
 	this.sender = [params[2], params[3], params[4], params[5], params[6], params[7]];
 	this.address_type = params[8];
 	this.bond = params[9];
-	this.data = params[10];
+	this.data = params.splice(10, params.length-1);
 }
 var _bgEventGAPModeChanged = function(params) {
 	this.discover = params[0];
@@ -186,36 +186,36 @@ var _bgEventHWPortStatusChange = function(params){
 	this.irq = params[5];
 	this.state = params[6];
 }	
-// var _bgEventHWADCResult = function(params) {
-// 	this.input = params[0];
-// 	this.value = bitwise.numberFromUint8Bytes([params[0], params[1]]); 
-// }
-// var_bgEventHWDFUBoot = function(params) {
-// 	this.version = bitwise.numberFromUint8Bytes([params[0], params[1], params[2], params[3]]);
-// }
+var _bgEventHWADCResult = function(params) {
+	this.input = params[0];
+	this.value = bitwise.numberFromUint8Bytes([params[0], params[1]]); 
+}
+var_bgEventHWDFUBoot = function(params) {
+	this.version = bitwise.numberFromUint8Bytes([params[0], params[1], params[2], params[3]]);
+}
 
 var Events = {
-// 	// System Events
-// 	0: [_bgEventSystemBoot, _bgEventSystemDebug, _bgEventSystemEndpointWatermarkRx,
+	// System Events
+	0: [_bgEventSystemBoot],// _bgEventSystemDebug, _bgEventSystemEndpointWatermarkRx,
 // _bgEventSystemEndpointWatermarkTx, _bgEventSystemScriptFailure, _bgEventSystemNoLicenseKey,
 // _bgEventSystemProtocolError],
 
-// 	// PS Events
-// 	1: [_bgEventFlashPSKey],
+	// PS Events
+	// 1: [_bgEventFlashPSKey],
 
-// 	// Attribute Database Events
-// 	2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
+	// Attribute Database Events
+	// 2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
 
-// 	// Connection Events
+	// Connection Events
 // 	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd, _bgEventConnectionFeatureInd,
 // _bgEventConnectionRawRx, _bgEventConnectionDisconnected],
 
-// 	// Attribute Client Events
+	// Attribute Client Events
 // 	4: [_bgEventAttClientIndicated, _bgEventAttClientProcedureCompleted, _bgEventAttClientGroupFound,
 // _bgEventAttClientFindInformationFound, _bgEventAttClientGroupFound, _bgEventAttClientAttributeValue,
 // _bgEventAttClientReadMultipleResponse],
 
-// 	// Security Manager Events
+	// Security Manager Events
 // 	5: [_bgEventSMSMPData, _bgEventSMBondingFail, _bgEventSMPasskeyDisplay,
 // _bgEventSMPasskeyRequest, _bgEventSMBondStatus],
 
