@@ -1,4 +1,4 @@
-var bitwise = require('../BitwiseOperations/BitwiseOperations');
+var bitwise = require('./bitwise-ops');
 
 /***************************************
 *		SYSTEM Events

@@ -1,6 +1,6 @@
-var bitwise = require('./BitwiseOperations/BitwiseOperations');
-var libRes = require('./BGLibResponses/BGLibResponses');
-var libEvent = require('./BGLibEvents/BGLibEvents');
+var bitwise = require('./libs/bitwise-ops');
+var libRes = require('./libs/bglib-responses');
+var libEvent = require('./libs/bglib-events');
 
 var _bglibPMode;
 
@@ -151,7 +151,7 @@ var _bgcommandIDs = {
 }
 
 //	// System Enumerations
-// BGLib.prototype.Endpoints = {
+// bglib.prototype.Endpoints = {
 // 	system_endpoint_api : 0,
 // 	system_endpoint_test : 1,
 // 	system_endpoint_script : 2,
@@ -161,19 +161,19 @@ var _bgcommandIDs = {
 // }
 
 // 	// Attribute Database Enumerations
-// BGLib.prototype.AttributeChangeReason = {
+// bglib.prototype.AttributeChangeReason = {
 // 	attributes_attribute_change_reason_write_request : 0,
 // 	attributes_attribute_change_reason_write_command : 1,
 // 	attributes_attribute_change_reason_write_request_user : 2,
 // }
 
-// BGLib.prototype.AttributeStatusFlags = {
+// bglib.prototype.AttributeStatusFlags = {
 // 	attributes_attribute_status_flag_notify : 1,
 // 	attributes_attribute_status_flag_indicate : 2,
 // }
 
 //	// Connection Enumerations
-// BGLib.prototype.ConnectionStatus = {
+// bglib.prototype.ConnectionStatus = {
 // 	connection_connected : 1,
 // 	connection_encrypted : 1 << 1,
 // 	connection_completed : 1 << 2,
@@ -181,7 +181,7 @@ var _bgcommandIDs = {
 // }
 
 // 	// Attribute Client Enumerations
-// BGLib.prototype.AttributeValueType = {
+// bglib.prototype.AttributeValueType = {
 // 	attclient_attribute_value_type_read : 0,
 // 	attclient_attribute_value_type_notify : 1,
 // 	attclient_attribute_value_type_indicate : 2,
@@ -191,7 +191,7 @@ var _bgcommandIDs = {
 // }
 
 // 	// Security Manager Enumerations
-// BGLib.prototype.BondingKeys = {
+// bglib.prototype.BondingKeys = {
 // 	sm_bonding_key_ltk : 0x01,
 // 	sm_bonding_key_addr_public : 0x02,
 // 	sm_bonding_key_addr_static : 0x04,
@@ -201,7 +201,7 @@ var _bgcommandIDs = {
 // 	sm_bonding_key_masterid : 0x40,
 // }
 
-// BGLib.prototype.SMPIO = {
+// bglib.prototype.SMPIO = {
 // 	sm_io_capability_displayonly : 0,
 // 	sm_io_capability_displayyesno : 1,
 // 	sm_io_capability_keyboardonly : 2,
@@ -210,7 +210,7 @@ var _bgcommandIDs = {
 // }
 
 //	// GAP Enumerations
-// BGLib.prototype.AD_Flags = {
+// bglib.prototype.AD_Flags = {
 // 	GAP_AD_FLAG_LIMITED_DISCOVERABLE : 0x01,
 // 	GAP_AD_FLAG_GENERAL_DISCOVERABLE : 0x02,
 // 	GAP_AD_FLAG_BREDR_NOT_SUPPORTED : 0x04,
@@ -219,7 +219,7 @@ var _bgcommandIDs = {
 // 	GAP_AD_FLAG_MASK : 0x1f
 // }
 
-// BGLib.prototype.ADTypeFlags = {
+// bglib.prototype.ADTypeFlags = {
 // 	gap_ad_type_none : 0,
 // 	gap_ad_type_flags : 1,
 // 	gap_ad_type_services_16bit_more : 2,
@@ -233,26 +233,26 @@ var _bgcommandIDs = {
 // 	gap_ad_type_txpower : 10,
 // }
 
-// BGLib.prototype.AdvertistingPolicy = {
+// bglib.prototype.AdvertistingPolicy = {
 // 	gap_adv_policy_all : 0,
 // 	gap_adv_policy_whitelist_scan : 1,
 // 	gap_adv_policy_whitelist_connect : 2,
 // 	gap_adv_policy_whitelist_all : 3,
 // }
 
-BGLib.prototype.BluetoothAddressTypes = {
+bglib.prototype.BluetoothAddressTypes = {
 	gap_address_type_public : 0,
 	gap_address_type_random : 1,
 }
 
-BGLib.prototype.GAPConnectableMode = {
+bglib.prototype.GAPConnectableMode = {
 	gap_non_connectable : 0,
 	gap_directed_connectable : 1,
 	gap_undirected_connectable : 2,
 	gap_scannable_connectable : 3,
 }
 
-BGLib.prototype.GAPDiscoverableModes = {
+bglib.prototype.GAPDiscoverableModes = {
 	gap_non_discoverable : 0,
 	gap_limited_discoverable : 1,
 	gap_general_discoverable : 2,
@@ -261,13 +261,13 @@ BGLib.prototype.GAPDiscoverableModes = {
 	gap_enhanced_broadcasting : 0x80,
 }
 
-BGLib.prototype.GAPDiscoverMode = {
+bglib.prototype.GAPDiscoverMode = {
 	gap_discover_limited : 0,
 	gap_discover_generic : 1,
 	gap_discover_observation : 2,
 }
 
-// BGLib.prototype.SCAN_HEADER_FLAGS = {
+// bglib.prototype.SCAN_HEADER_FLAGS = {
 // 	GAP_SCAN_HEADER_ADV_IND : 0,
 // 	GAP_SCAN_HEADER_ADV_DIRECT_IND : 1,
 // 	GAP_SCAN_HEADER_ADV_NONCONN_IND : 2,
@@ -277,7 +277,7 @@ BGLib.prototype.GAPDiscoverMode = {
 // 	GAP_SCAN_HEADER_ADV_DISCOVER_IND : 6,
 // }
 
-// BGLib.prototype.ScanPolicy = {
+// bglib.prototype.ScanPolicy = {
 // 	gap_scan_policy_all : 0,
 // 	gap_scan_policy_whitelist : 1
 // }
@@ -399,7 +399,7 @@ var ParsedPacket = function(packet, responseType, response) {
 	this.response = response;
 }
 
-function BGLib(packetMode) {
+function bglib(packetMode) {
 	_bglibPMode = packetMode;
 	this.bgapiRXBuffer = [];
 	this.bgapiRXBufferPos = 0; 
@@ -407,7 +407,7 @@ function BGLib(packetMode) {
 } 
 
 
-BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
+bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 	var self = this;
 
@@ -487,7 +487,7 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 	});
 }
 
-BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
+bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 	if (!incomingBytes) callback(new Error("No bytes passed into packet reconstruction"));
 
@@ -578,7 +578,7 @@ BGLib.prototype.reconstructPackets = function(incomingBytes, callback) {
 * Params: 			command - the command ID of the relevant command
 *					params - An array of parameters to put in payload
 **************************************************************************/
-BGLib.prototype.getPacket = function(command, params, callback) {
+bglib.prototype.getPacket = function(command, params, callback) {
 
 	// Get command information
 	var payloadBytes = [];
@@ -687,7 +687,7 @@ BGLib.prototype.getPacket = function(command, params, callback) {
 	});
 }
 
-BGLib.prototype.verifyParams = function(paramCode, params, callback) {
+bglib.prototype.verifyParams = function(paramCode, params, callback) {
 
 	numParams = 0;
 
@@ -711,11 +711,11 @@ BGLib.prototype.verifyParams = function(paramCode, params, callback) {
 	}
 }
 
-BGLib.prototype.getEventName = function(eventClass, eventCommand){
+bglib.prototype.getEventName = function(eventClass, eventCommand){
 	return libEvent.EventNames[eventClass][eventCommand];
 }
 
-BGLib.prototype.api = {
+bglib.prototype.api = {
 
 	// System
 	systemReset : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reset}, paramCode: 0x02},
@@ -832,6 +832,6 @@ BGLib.prototype.api = {
 	// dfuReset: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Flash_Upload_Finish}, paramCode: 0x00},
 }
 
-module.exports.BGLib = BGLib;
+module.exports.bglib = bglib;
 module.exports.PACKET_MODE = PACKET_MODE;
-module.exports.FLOW_CONTROL = FLOW_CONTROL;
+// module.exports.FLOW_CONTROL = FLOW_CONTROL;
