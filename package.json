@@ -1,6 +1,6 @@
 {
   "name": "bglib",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Create and parse packets for the BlueGiga BLE112 and BLE113",
   "main": "bglib.js",
   "scripts": {
@@ -15,6 +15,10 @@
   "keywords": [
     "bluetooth",
     "ble",
-    "ble112"
+    "ble112",
+    "ble113",
+    "bluegiga",
+    "low",
+    "energy"
   ]
 }
