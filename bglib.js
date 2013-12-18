@@ -245,21 +245,21 @@ BGLib.prototype.BluetoothAddressTypes = {
 	gap_address_type_random : 1,
 }
 
-// BGLib.prototype.GAPConnectableMode = {
-// 	gap_non_connectable : 0,
-// 	gap_directed_connectable : 1,
-// 	gap_undirected_connectable : 2,
-// 	gap_scannable_connectable : 3,
-// }
+BGLib.prototype.GAPConnectableMode = {
+	gap_non_connectable : 0,
+	gap_directed_connectable : 1,
+	gap_undirected_connectable : 2,
+	gap_scannable_connectable : 3,
+}
 
-// BGLib.prototype.GAPDiscoverableModes = {
-// 	gap_non_discoverable : 0,
-// 	gap_limited_discoverable : 1,
-// 	gap_general_discoverable : 2,
-// 	gap_broadcast : 3,
-// 	gap_user_data : 4,
-// 	gap_enhanced_broadcasting : 0x80,
-// }
+BGLib.prototype.GAPDiscoverableModes = {
+	gap_non_discoverable : 0,
+	gap_limited_discoverable : 1,
+	gap_general_discoverable : 2,
+	gap_broadcast : 3,
+	gap_user_data : 4,
+	gap_enhanced_broadcasting : 0x80,
+}
 
 BGLib.prototype.GAPDiscoverMode = {
 	gap_discover_limited : 0,
@@ -349,8 +349,7 @@ Payload.prototype.getByteArray = function() {
 
 	var byteArray = [];
 
-	for (var i in this.rawPayload) {
-
+	for (var i = 0; i < this.rawPayload.length; i++) {
 		var payloadEntry = this.rawPayload[i];
 
 		if ((typeof payloadEntry == 'number') || (typeof payloadEntry == 'string')) {
@@ -373,7 +372,7 @@ Payload.prototype.getByteArray = function() {
 			}
 		}
 		else {
-			console.log("Oh it's this error...");
+
 			throw new Error("You can only send numbers or strings...");
 		}
 	}
@@ -428,9 +427,7 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 			// Parse the response into appropriate Params
 			var packet = packets[i];
-			// console.log("packets: ", packets);
-			// console.log("packet in", i);
-			// console.log("packet", packet);
+	
 			var data;
 
 			// If this packet is an event
@@ -446,6 +443,7 @@ BGLib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 					// Add the parsed packet to the return array
 					 parsedReturn.push(new ParsedPacket(packet, "Event", data));
+
 					} else {
 						throw new Error("No existing event creator for packet of class " + packet.packetHeader.cClass + " and command id " +  packet.packetHeader.cID);
 					}
@@ -757,20 +755,20 @@ BGLib.prototype.api = {
 
 	// // Connection
 	// connectionDisconnect : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Disconnect}, paramCode: 0x02},
-	// connectionGetRSSI : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_RSSI}, paramCode: 0x02},
+	connectionGetRSSI : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_RSSI}, paramCode: 0x02},
 	// connectionUpdate : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Update}, paramCode: 0x44442},
 	// connectionVersion : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Version_Update}, paramCode: 0x02},
 	// connectionChannelMapGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Channel_Map_Get}, paramCode: 0x02},
 	// connectionChannelMapSet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Channel_Map_Set}, paramCode: 0x82},
 	// connectionFeaturesGet : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Features_Get}, paramCode: 0x02},
-	// connectionGetStatus : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_Status}, paramCode: 0x02},
+	connectionGetStatus : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Get_Status}, paramCode: 0x02},
 	// connectionRawTx : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.Connection, command : _bgcommandIDs.Connection_Raw_Tx}, paramCode: 0x82},
 
 	// // Attribute Client
-	// attClientFindByTypeValue : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_By_Type_Value}, paramCode: 0x84442},
+	attClientFindByTypeValue : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_By_Type_Value}, paramCode: 0x84442},
 	// attClientReadByGroupType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Group_Type}, paramCode: 0x84442},
 	// attClientReadByType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, cid : _bgcommandIDs.Attclient_Read_By_Type}, paramCode: 0x84442},
-	// attClientFindInformation : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_Information}, paramCode: 0x442},
+	attClientFindInformation : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_Information}, paramCode: 0x442},
 	// attClientReadByHandle : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Handle}, paramCode: 0x42},
 	// attClientAttributeWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Attribute_Write}, paramCode: 0x842},
 	// attClientWriteCommand : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Write_Command}, paramCode: 0x842},
@@ -791,7 +789,7 @@ BGLib.prototype.api = {
 
 	// GAP
 	// gapSetPrivacyFlags: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Privacy_Flags}, paramCode: 0x22},
-	// gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
+	gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
 	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x02},	
 	gapConnectDirect: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Direct}, paramCode: 0x44442a},
 	gapEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x00},

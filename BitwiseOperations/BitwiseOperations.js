@@ -77,9 +77,8 @@ function numberIntoNLengthByteArray(number, n) {
 
 	for (var i = 0; i < n; i++) {
 		byteArray.push(number & 0xFF);
-		number >> 8;
+		number = number >> 8;
 	}
-	// console.log("Returning: ", byteArray);
 	return byteArray;
 }
 

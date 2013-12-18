@@ -59,14 +59,14 @@ console.assert(lib, "There was an error on lib import");
 // 	console.log(parsedPackets);
 
 // });
-// lib.parseIncoming([174, 0, 119, 203, 137, 58, 150, 219, 1, 255, 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 191, 162, 189, 1, 70, 125, 110, 42, 104, 171, 173, 5, 22, 10, 24, 8, 4, 128, 38, 6, 0, 169, 0, 148, 220, 209, 27, 4, 194, 1, 255, 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 128],
-// 	function(err, parsedPackets) {
-// 	if (err) return console.log(err);
+lib.parseIncoming([ 128, 7, 7, 0, 179, 48, 3, 0, 1, 16, 19, 0, 2],
+	function(err, parsedPackets) {
+	if (err) return console.log(err);
 
-// 	console.log(parsedPackets);
+	console.log(parsedPackets);
 
-// });
-lib.parseIncoming([0, 2, 6, 4, 129, 1, 0, 2, 6, 4, 129, 1, 0, 2, 6, 4, 129, 1, 0, 2, 6, 4, 129, 1, 0, 2, 6, 4, 129, 1, 0, 2, 6, 4, 129, 1],
+});
+lib.parseIncoming([128, 12, 0, 0, 1, 0, 2, 0, 1, 0, 91, 0, 3, 0, 1, 6],
 	function(err, parsedPackets) {
 	if (err) return console.log(err);
 

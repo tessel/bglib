@@ -67,22 +67,22 @@ var _bgEventSystemBoot = function(params) {
 // /***************************************
 // *		Connection Events
 // ****************************************/ 
-// var _bgEventConnectionStatus = function(params) {
-// 	this.connection = params[0];
-// 	this.flags = params[1];
-// 	this.address = [params[2], params[3], params[4], params[5], params[6], params[7]];
-// 	this.address_type = params[8];
-// 	this.conn_interval = bitwise.numberFromUint8Bytes([params[9], params[10]]);
-// 	this.timeout = bitwise.numberFromUint8Bytes([params[11], params[12]]);
-// 	this.latency = bitwise.numberFromUint8Bytes([params[13], params[14]]);
-// 	this.bonding = params[15];
-// }
-// var _bgEventConnectionVersionInd = function(params) {
-// 	this.connection = params[0];
-// 	this.version_nr = params[1];
-// 	this.comp_id = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-// 	this.sub_vers_nr = bitwise.numberFromUint8Bytes([params[4], params[5]]);
-// }
+var _bgEventConnectionStatus = function(params) {
+	this.connection = params[0];
+	this.flags = params[1];
+	this.address = [params[2], params[3], params[4], params[5], params[6], params[7]];
+	this.address_type = params[8];
+	this.conn_interval = bitwise.numberFromUint8Bytes([params[9], params[10]]);
+	this.timeout = bitwise.numberFromUint8Bytes([params[11], params[12]]);
+	this.latency = bitwise.numberFromUint8Bytes([params[13], params[14]]);
+	this.bonding = params[15];
+}
+var _bgEventConnectionVersionInd = function(params) {
+	this.connection = params[0];
+	this.version_nr = params[1];
+	this.comp_id = bitwise.numberFromUint8Bytes([params[2], params[3]]);
+	this.sub_vers_nr = bitwise.numberFromUint8Bytes([params[4], params[5]]);
+}
 // var _bgEventConnectionFeatureInd = function(params) {
 // 	this.connection = params[0];
 // 	this.features = bitwise.numberFromUint8Bytes([params[1], params[2]]);
@@ -91,10 +91,10 @@ var _bgEventSystemBoot = function(params) {
 // 	this.connection = params[0];
 // 	this.data = bitwise.numberFromUint8Bytes([params[1], params[2]]);
 // }
-// var _bgEventConnectionDisconnected = function(params) {
-// 	this.connection = params[0];
-// 	this.reason = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// }
+var _bgEventConnectionDisconnected = function(params) {
+	this.connection = params[0];
+	this.reason = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+}
 
 // /***************************************
 // *		Attribute Client Events
@@ -104,22 +104,22 @@ var _bgEventSystemBoot = function(params) {
 // 	this.connection = params[0];
 // 	this.attrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
 // }
-// var _bgEventAttClientProcedureCompleted = function(params) {
-// 	this.connection = params[0];
-// 	this.result = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.chrhandle = bitwise.numberFromUint8Bytes([params[3], params[4]]);
-// }
+var _bgEventAttClientProcedureCompleted = function(params) {
+	this.connection = params[0];
+	this.result = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.chrhandle = bitwise.numberFromUint8Bytes([params[3], params[4]]);
+}
 // var _bgEventAttClientGroupFound = function(params) {
 // 	this.connection = params[0];
 // 	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
 // 	this.end = bitwise.numberFromUint8Bytes([params[3], params[4]]);
 // 	this.uuid = params[5];
 // }
-// var _bgEventAttClientFindInformationFound = function(params) {
-// 	this.connection = params[0];
-// 	this.chrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.uuid = params[3];
-// }
+var _bgEventAttClientFindInformationFound = function(params) {
+	this.connection = params[0];
+	this.chrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.uuid = params[3];
+}
 // var _bgEventAttClientGroupFound = function(params) {
 // 	this.connection = params[0];
 // 	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
@@ -207,12 +207,12 @@ var Events = {
 	// 2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
 
 	// Connection Events
-// 	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd, _bgEventConnectionFeatureInd,
-// _bgEventConnectionRawRx, _bgEventConnectionDisconnected],
+	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd, null, null, // _bgEventConnectionFeatureInd,*/
+/*_bgEventConnectionRawRx,*/ _bgEventConnectionDisconnected],
 
 	// Attribute Client Events
-// 	4: [_bgEventAttClientIndicated, _bgEventAttClientProcedureCompleted, _bgEventAttClientGroupFound,
-// _bgEventAttClientFindInformationFound, _bgEventAttClientGroupFound, _bgEventAttClientAttributeValue,
+	4: [/*_bgEventAttClientIndicated*/null, _bgEventAttClientProcedureCompleted, null, //_bgEventAttClientGroupFound,
+	_bgEventAttClientFindInformationFound, null],//_bgEventAttClientGroupFound], //_bgEventAttClientAttributeValue,
 // _bgEventAttClientReadMultipleResponse],
 
 	// Security Manager Events
