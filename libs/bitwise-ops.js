@@ -74,7 +74,6 @@ function numberFromUint8Bytes(bytes) {
 function numberIntoNLengthByteArray(number, n) {
 
 	var byteArray = [];
-
 	for (var i = 0; i < n; i++) {
 		byteArray.push(number & 0xFF);
 		number = number >> 8;

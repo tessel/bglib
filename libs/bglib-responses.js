@@ -36,15 +36,15 @@ var _bgResponseHello = function(params) {
 // 	this.value = params[4];
 // }
 
-// var _bgResponseGetInfo = function(params) {
-// 	this.major = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// 	this.minor = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-// 	this.patch = bitwise.numberFromUint8Bytes([params[4], params[5]]);
-// 	this.build = bitwise.numberFromUint8Bytes([params[6], params[7]]);
-// 	this.llversion = bitwise.numberFromUint8Bytes([params[8], params[9]]);
-// 	this.protocol_version = params[10];
-// 	this.hw = params[11];
-// }
+var _bgResponseGetInfo = function(params) {
+	this.major = bitwise.numberFromUint8Bytes([params[0], params[1]]);
+	this.minor = bitwise.numberFromUint8Bytes([params[2], params[3]]);
+	this.patch = bitwise.numberFromUint8Bytes([params[4], params[5]]);
+	this.build = bitwise.numberFromUint8Bytes([params[6], params[7]]);
+	this.llversion = bitwise.numberFromUint8Bytes([params[8], params[9]]);
+	this.protocol_version = params[10];
+	this.hw = params[11];
+}
 
 // var _bgResponseEndpointTx = function(params) {
 // 	this.result = bitwise.numberFromUint8Bytes(params[0], params[1]);
