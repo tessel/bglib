@@ -746,11 +746,11 @@ bglib.prototype.api = {
 	// flashWriteWords : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Flash_Write_Words}, paramCode: 0x84},
 
 	// // Attribute Database
-	// attributesWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Write}, paramCode: 0x824},
-	// attributesRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Read}, paramCode: 0x44},
-	// attributesReadType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_Read_Type}, paramCode: 0x04},	
-	// attributesUserReadResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_User_Read_Response}, paramCode: 0x822},
-	// attributesUserWriteResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.PersistentStore, command : _bgcommandIDs.Attributes_User_Write_Response}, paramCode: 0x22},
+	// attributesWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Write}, paramCode: 0x824},
+	attributesRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Read}, paramCode: 0x44},
+	attributesReadType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Read_Type}, paramCode: 0x04},	
+	// attributesUserReadResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_User_Read_Response}, paramCode: 0x822},
+	// attributesUserWriteResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_User_Write_Response}, paramCode: 0x22},
 
 
 	// // Connection
