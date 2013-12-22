@@ -1,4 +1,5 @@
 var bitwise = require('./bitwise-ops');
+var errorHandler = require('./bglib-errors');
 
 /***************************************
 *		SYSTEM Events
@@ -83,59 +84,59 @@ var _bgEventConnectionVersionInd = function(params) {
 	this.comp_id = bitwise.numberFromUint8Bytes([params[2], params[3]]);
 	this.sub_vers_nr = bitwise.numberFromUint8Bytes([params[4], params[5]]);
 }
-// var _bgEventConnectionFeatureInd = function(params) {
-// 	this.connection = params[0];
-// 	this.features = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// }
-// var _bgEventConnectionRawRx = function(params) {
-// 	this.connection = params[0];
-// 	this.data = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// }
+var _bgEventConnectionFeatureInd = function(params) {
+	this.connection = params[0];
+	this.features = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+}
+var _bgEventConnectionRawRx = function(params) {
+	this.connection = params[0];
+	this.data = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+}
 var _bgEventConnectionDisconnected = function(params) {
 	this.connection = params[0];
-	this.reason = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.reason = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes([params[1], params[2]]));
 }
 
-// /***************************************
-// *		Attribute Client Events
-// ****************************************/ 
+/***************************************
+*		Attribute Client Events
+****************************************/ 
 
-// var _bgEventAttClientIndicated = function(params) {
-// 	this.connection = params[0];
-// 	this.attrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// }
+var _bgEventAttClientIndicated = function(params) {
+	this.connection = params[0];
+	this.attrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+}
 var _bgEventAttClientProcedureCompleted = function(params) {
 	this.connection = params[0];
-	this.result = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes([params[1], params[2]]));
 	this.chrhandle = bitwise.numberFromUint8Bytes([params[3], params[4]]);
 }
-// var _bgEventAttClientGroupFound = function(params) {
-// 	this.connection = params[0];
-// 	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.end = bitwise.numberFromUint8Bytes([params[3], params[4]]);
-// 	this.uuid = params[5];
-// }
+var _bgEventAttClientGroupFound = function(params) {
+	this.connection = params[0];
+	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.end = bitwise.numberFromUint8Bytes([params[3], params[4]]);
+	this.uuid = params[5];
+}
 var _bgEventAttClientFindInformationFound = function(params) {
 	this.connection = params[0];
 	this.chrhandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-	this.uuid = params[3];
+	this.uuid = bitwise.numberFromUint8Bytes(params.splice(3, params.length - 3));
 }
-// var _bgEventAttClientGroupFound = function(params) {
-// 	this.connection = params[0];
-// 	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.end = bitwise.numberFromUint8Bytes([params[3], params[4]]);
-// 	this.uuid = params[5];
-// }
-// var _bgEventAttClientAttributeValue = function(params) {
-// 	this.connection = params[0];
-// 	this.atthandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.type = params[3]
-// 	this.value = params[4];
-// }
-// var _bgEventAttClientReadMultipleResponse = function(params) {
-// 	this.connection = params[0];
-// 	this.handles = params[1];
-// }
+var _bgEventAttClientGroupFound = function(params) {
+	this.connection = params[0];
+	this.start = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.end = bitwise.numberFromUint8Bytes([params[3], params[4]]);
+	this.uuid = params[5];
+}
+var _bgEventAttClientAttributeValue = function(params) {
+	this.connection = params[0];
+	this.atthandle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.type = params[3]
+	this.value = params.splice(4, params.length - 4);
+}
+var _bgEventAttClientReadMultipleResponse = function(params) {
+	this.connection = params[0];
+	this.handles = params[1];
+}
 // /***************************************
 // *		Security Manager Events
 // ****************************************/ 
@@ -207,12 +208,12 @@ var Events = {
 	// 2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
 
 	// Connection Events
-	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd, null, null, // _bgEventConnectionFeatureInd,*/
-/*_bgEventConnectionRawRx,*/ _bgEventConnectionDisconnected],
+	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd,  _bgEventConnectionFeatureInd,
+	_bgEventConnectionRawRx, _bgEventConnectionDisconnected],
 
 	// Attribute Client Events
-	4: [/*_bgEventAttClientIndicated*/null, _bgEventAttClientProcedureCompleted, null, //_bgEventAttClientGroupFound,
-	_bgEventAttClientFindInformationFound, null],//_bgEventAttClientGroupFound], //_bgEventAttClientAttributeValue,
+	4: [_bgEventAttClientIndicated, _bgEventAttClientProcedureCompleted, _bgEventAttClientGroupFound,_bgEventAttClientGroupFound,
+	_bgEventAttClientFindInformationFound, _bgEventAttClientAttributeValue],
 // _bgEventAttClientReadMultipleResponse],
 
 	// Security Manager Events

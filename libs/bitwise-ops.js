@@ -40,10 +40,8 @@ function getBytesOfString(string) {
 	var bytes = [];
 
 	for (var i = 0; i < string.length; i++) {
-
 		bytes.push(string.charCodeAt(i));
 	}
-
 	return bytes;
 }
 
@@ -64,7 +62,7 @@ function numberFromUint8Bytes(bytes) {
 	}
 
 	var num = 0;
-	for (var i in bytes) {
+	for (var i = 0; i < bytes.length; i++) {
 		num += (bytes[i] << (i * 8))
 	}
 
