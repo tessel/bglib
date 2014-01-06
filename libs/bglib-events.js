@@ -13,61 +13,61 @@ var _bgEventSystemBoot = function(params) {
 	this.protocol_version = params[10];
 	this.hw = params[11];
 }
-// var _bgEventSystemDebug = function(params) {
-// 	this.data = params[0];
-// }
-// var _bgEventSystemEndpointWatermarkRx = function(params) {
-// 	this.endpoint = params[0];
-// 	this.data = params[1];
-// }
-// var _bgEventSystemEndpointWatermarkTx = function(params) {
-// 	this.endpoint = params[0];
-// 	this.data = params[1];
-// }
-// var _bgEventSystemScriptFailure = function(params) {
-// 	this.address = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// 	this.reason = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-// }
-// var _bgEventSystemNoLicenseKey = function(params) {
+var _bgEventSystemDebug = function(params) {
+	this.data = params[0];
+}
+var _bgEventSystemEndpointWatermarkRx = function(params) {
+	this.endpoint = params[0];
+	this.data = params[1];
+}
+var _bgEventSystemEndpointWatermarkTx = function(params) {
+	this.endpoint = params[0];
+	this.data = params[1];
+}
+var _bgEventSystemScriptFailure = function(params) {
+	this.address = bitwise.numberFromUint8Bytes([params[0], params[1]]);
+	this.reason = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes([params[2], params[3]]));
+}
+var _bgEventSystemNoLicenseKey = function(params) {
 
-// }
-// var _bgEventSystemProtocolError = function(params) {
-// 	this.reason = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// }
+}
+var _bgEventSystemProtocolError = function(params) {
+	this.reason = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes([params[0], params[1]]));
+}
 
-// /***************************************
-// *		Persistent Storage Events
-// ****************************************/ 
+/***************************************
+*		Persistent Storage Events
+****************************************/ 
 
-// var _bgEventFlashPSKey = function(params) {
-// 	var key = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// 	var data = params[2];
-// }
+var _bgEventFlashPSKey = function(params) {
+	this.key = bitwise.numberFromUint8Bytes([params[0], params[1]]);
+	this.value = params[2];
+}
 
-// /***************************************
-// *		Attribute Database Events
-// ****************************************/ 
+/***************************************
+*		Attribute Database Events
+****************************************/ 
 
-// var _bgEventAttributesValue = function(params) {
-// 	this.connection = params[0];
-// 	this.reason = params[1]
-// 	this.offset = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-// 	this.handle = bitwise.numberFromUint8Bytes([params[4], params[5]]);
-// 	this.value = params[6];
-// }
-// var _bgEventAttributesUserReadRequest = function(params) {
-// 	this.connection = params[0];
-// 	this.handle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// 	this.offset = bitwise.numberFromUint8Bytes([params[3], params[4]]);
-// 	this.maxsize = params[5]
-// }
-// var _bgEventAtributesStatus = function(params) {
-// 	this.handle = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-// 	this.flags = params[2];
-// }
-// /***************************************
-// *		Connection Events
-// ****************************************/ 
+var _bgEventAttributesValue = function(params) {
+	this.connection = params[0];
+	this.reason = params[1]
+	this.offset = bitwise.numberFromUint8Bytes([params[2], params[3]]);
+	this.handle = bitwise.numberFromUint8Bytes([params[4], params[5]]);
+	this.value = params[6];
+}
+var _bgEventAttributesUserReadRequest = function(params) {
+	this.connection = params[0];
+	this.handle = bitwise.numberFromUint8Bytes([params[1], params[2]]);
+	this.offset = bitwise.numberFromUint8Bytes([params[3], params[4]]);
+	this.maxsize = params[5]
+}
+var _bgEventAtributesStatus = function(params) {
+	this.handle = bitwise.numberFromUint8Bytes([params[0], params[1]]);
+	this.flags = params[2];
+}
+/***************************************
+*		Connection Events
+****************************************/ 
 var _bgEventConnectionStatus = function(params) {
 	this.connection = params[0];
 	this.flags = params[1];
@@ -137,31 +137,31 @@ var _bgEventAttClientReadMultipleResponse = function(params) {
 	this.connection = params[0];
 	this.handles = params[1];
 }
-// /***************************************
-// *		Security Manager Events
-// ****************************************/ 
-// var _bgEventSMSMPData = function(params) {
-// 	this.handle = params[0];
-// 	this.packet = params[1];
-// 	this.data = params[2];
-// }
-// var _bgEventSMBondingFail = function(params) {
-// 	this.handle = params[0];
-// 	this.result = bitwise.numberFromUint8Bytes([params[1], params[2]]);
-// }
-// var _bgEventSMPasskeyDisplay = function(params) {
-// 	this.handle = params[0];
-// 	this.passkey = this.result = bitwise.numberFromUint8Bytes([params[1], params[2], params[3], params[4]]);
-// }
-// var _bgEventSMPasskeyRequest = function(params) {
-// 	this.handle = params[0];
-// }
-// var _bgEventSMBondStatus = function(params) {
-// 	this.bond = params[0];
-// 	this.keysize = params[1];
-// 	this.mitm = params[2];
-// 	this.keys = params[3];
-// }
+/***************************************
+*		Security Manager Events
+****************************************/ 
+var _bgEventSMSMPData = function(params) {
+	this.handle = params[0];
+	this.packet = params[1];
+	this.data = params[2];
+}
+var _bgEventSMBondingFail = function(params) {
+	this.handle = params[0];
+	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes([params[1], params[2]]));
+}
+var _bgEventSMPasskeyDisplay = function(params) {
+	this.handle = params[0];
+	this.passkey = bitwise.numberFromUint8Bytes([params[1], params[2], params[3], params[4]]);
+}
+var _bgEventSMPasskeyRequest = function(params) {
+	this.handle = params[0];
+}
+var _bgEventSMBondStatus = function(params) {
+	this.bond = params[0];
+	this.keysize = params[1];
+	this.mitm = params[2];
+	this.keys = params[3];
+}
 /***************************************
 *		GAP Events
 ****************************************/ 
@@ -197,15 +197,15 @@ var_bgEventHWDFUBoot = function(params) {
 
 var Events = {
 	// System Events
-	0: [_bgEventSystemBoot],// _bgEventSystemDebug, _bgEventSystemEndpointWatermarkRx,
-// _bgEventSystemEndpointWatermarkTx, _bgEventSystemScriptFailure, _bgEventSystemNoLicenseKey,
-// _bgEventSystemProtocolError],
+	0: [_bgEventSystemBoot, _bgEventSystemDebug, _bgEventSystemEndpointWatermarkRx,
+ _bgEventSystemEndpointWatermarkTx, _bgEventSystemScriptFailure, _bgEventSystemNoLicenseKey,
+ _bgEventSystemProtocolError],
 
 	// PS Events
-	// 1: [_bgEventFlashPSKey],
+	1: [_bgEventFlashPSKey],
 
 	// Attribute Database Events
-	// 2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
+	2: [_bgEventAttributesValue, _bgEventAttributesUserReadRequest, _bgEventAtributesStatus],
 
 	// Connection Events
 	3: [_bgEventConnectionStatus, _bgEventConnectionVersionInd,  _bgEventConnectionFeatureInd,
@@ -213,18 +213,18 @@ var Events = {
 
 	// Attribute Client Events
 	4: [_bgEventAttClientIndicated, _bgEventAttClientProcedureCompleted, _bgEventAttClientGroupFound,_bgEventAttClientGroupFound,
-	_bgEventAttClientFindInformationFound, _bgEventAttClientAttributeValue],
-// _bgEventAttClientReadMultipleResponse],
+	_bgEventAttClientFindInformationFound, _bgEventAttClientAttributeValue,
+	_bgEventAttClientReadMultipleResponse],
 
 	// Security Manager Events
-// 	5: [_bgEventSMSMPData, _bgEventSMBondingFail, _bgEventSMPasskeyDisplay,
-// _bgEventSMPasskeyRequest, _bgEventSMBondStatus],
+	5: [_bgEventSMSMPData, _bgEventSMBondingFail, _bgEventSMPasskeyDisplay,
+	_bgEventSMPasskeyRequest, _bgEventSMBondStatus],
 
 	// GAP Events
 	6: [_bgEventGAPScanResponse, _bgEventGAPModeChanged],
 
 	// Hardware Events
-	7: [_bgEventHWPortStatusChange],//, _bgEventHWADCResult, var_bgEventHWDFUBoot],
+	7: [_bgEventHWPortStatusChange, _bgEventHWADCResult, var_bgEventHWDFUBoot],
 }
 	
 module.exports.Events = Events;
