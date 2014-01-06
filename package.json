@@ -1,16 +1,16 @@
 {
   "name": "bglib",
-  "version": "0.0.31",
+  "version": "0.0.5",
   "description": "Create and parse packets for the BlueGiga BLE112 and BLE113",
   "main": "bglib.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./test/test.js"
   },
   "author": "Jon McKay <jon@technical.io>",
   "license": "MIT",
   "readmeFilename": "README.md",
   "directories": {
-    "example": "examples"
+    "libs": "libraries"
   },
   "keywords": [
     "bluetooth",

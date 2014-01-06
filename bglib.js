@@ -17,7 +17,6 @@ var _bgtechnologyType = {
 	WiFi : 1 << 3
 }
 
-
 var _bgcommandClass = {
 	System : 0,
 	PersistentStore : 1,
