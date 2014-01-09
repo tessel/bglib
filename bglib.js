@@ -638,17 +638,32 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				case 7:
 				case 6:
 
-					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 4));
+					// If it's already separated into an array for us
+					if (Array.isArray(param)) {
+
+						// Just concat that array
+						payloadBytes = payloadBytes.concat(param);
+					} else {
+						// Add each byte of param to array
+						payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 4));
+
+					}
 
 					break;
 
 				// This parameter should be 16 bits
 				case 5:
 				case 4:
+					// If it's already separated into an array for us
+					if (Array.isArray(param)) {
 
-					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 2));
+						// Just concat that array
+						payloadBytes = payloadBytes.concat(param);
+					} else {
+						// Add each byte of param to array
+						payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 2));
+
+					}
 
 					break;
 
