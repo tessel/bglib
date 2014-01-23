@@ -420,6 +420,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 				} catch (e) {
 					// Eventually do something smarter here
 					console.log("Yeah, it was maybe here...")
+					console.log(packet);
 					console.log(e);
 					continue;
 				}
@@ -429,7 +430,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 				callback(new Error("Packet Parsing Error"), null);
 			}
 		};
-
+		console.log(parsedReturn);
 		// Return all the packets
 		callback && callback(err, parsedReturn);
 

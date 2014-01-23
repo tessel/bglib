@@ -155,7 +155,7 @@ var _bgEventSMBondStatus = function(params) {
 *		GAP Events
 ****************************************/ 
 var _bgEventGAPScanResponse = function(params) {
-	this.rssi = params.readUInt8(0);
+	this.rssi = params.readInt8(0);
 	this.packet_type = params.readUInt8(1);
 	this.sender = params.slice(2, 8);
 	this.address_type = params.readUInt8(8);
