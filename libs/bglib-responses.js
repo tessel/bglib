@@ -1,71 +1,59 @@
-var bitwise = require('./bitwise-ops');
 var errorHandler = require('./bglib-errors');
 
 /***************************************
 *		SYSTEM RESPONSES
 ****************************************/ 
 var _bgResponseReset = function(params) {
-	this.dfu = params[0];
+	this.dfu = params.readUInt8(0);
 }
 var _bgResponseHello = function(params) {
 
 }
 var _bgResponseAddressGet = function(params) {
-	this.address = [params[0], params[1], params[2], params[3], params[4], params[5]];
+	this.address = params;
 }
-var _bgResponseRegisterWrite = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-}
-var _bgResponseRegisterRead = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.value = params[2];
-}
+
 var _bgResponseGetCounters = function(params) {
-	this.txok = params[0];
-	this.txretry = params[1];
-	this.rxok = params[2];
-	this.rxfail = params[3];
-	this.mbuf = params[4];
+	this.txok = params.readUInt8(0);
+	this.txretry = params.readUInt8(1);
+	this.rxok = params.readUInt8(2);
+	this.rxfail = params.readUInt8(3);
+	this.mbuf = params.readUInt8(4);
 }
 
 var _bgResponseGetConnections = function(params) {
-	this.maxconn = params[0];
-}
-
-var _bgResponseReadMemory = function(params) {
-	this.address = bitwise.numberFromUint8Bytes(params[0], param[1], params[2], params[3]);
-	this.value = params[4];
+	this.maxconn = params.readUInt8(0);
 }
 
 var _bgResponseGetInfo = function(params) {
-	this.major = bitwise.numberFromUint8Bytes([params[0], params[1]]);
-	this.minor = bitwise.numberFromUint8Bytes([params[2], params[3]]);
-	this.patch = bitwise.numberFromUint8Bytes([params[4], params[5]]);
-	this.build = bitwise.numberFromUint8Bytes([params[6], params[7]]);
-	this.llversion = bitwise.numberFromUint8Bytes([params[8], params[9]]);
-	this.protocol_version = params[10];
-	this.hw = params[11];
+	this.major = params.readUInt16LE(0)
+	this.minor = params.readUInt16LE(2)
+	this.patch = params.readUInt16LE(4)
+	this.build = params.readUInt16LE(6)
+	this.llversion = params.readUInt16LE(8)
+	this.protocol_version = params.readUInt8(10);
+	this.hw = params.readUInt8(11);
 }
 
 var _bgResponseEndpointTx = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 
 var _bgResponseWhitelistAppend = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseWhitelistRemove = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseWhitelistClear = function(params) {
 
 }
 var _bgResponseEndpointRx = function(params) {
-	this.result  = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], param[1]));
-	this.size = params[2];
+	this.result  = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.size = params.readUInt8(2);
 }
 var _bgResponseSetWatermarks = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 
 /***************************************
@@ -82,19 +70,13 @@ var _bgResponsePSEraseAll = function(params) {
 
 }
 var _bgResponsePSSave = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponsePSLoad = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.value = params.splice(2, params.length-2)
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.value = params.slice(2);
 }
 var _bgResponsePSErase = function(params) {
-
-}
-var _bgResponsePSErasePase = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-}
-var _bgResponseWriteWords = function(params) {
 
 }
 
@@ -102,18 +84,18 @@ var _bgResponseWriteWords = function(params) {
 *		Attribute Database
 ****************************************/ 
 var _bgResponseAttributesWrite = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseAttributesRead = function(params) {
-	this.handle = bitwise.numberFromUint8Bytes(params[0], params[1]);
-	this.offset = bitwise.numberFromUint8Bytes(params[2], params[3]);
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[4], params[5]));
-	this.value = params.splice(6, params.length - 6);
+	this.handle = params.readUInt16LE(0)
+	this.offset = params.readUInt16LE(2)
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(4));
+	this.value = params.splice(6);
 }
 var _bgResponseAttributesReadType = function(params) {
-	this.handle = bitwise.numberFromUint8Bytes(params[0], params[1]);
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[2], params[3]));
-	this.value = params[4];
+	this.handle = params.readUInt16LE(0)
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(2));
+	this.value = params.slice(4);
 }
 var _bgResponseAttributesUserReadResponse= function(params) {
 
@@ -126,106 +108,96 @@ var _bgResponseAttributesUserWriteResponse = function(params) {
 *		Connection
 ****************************************/ 
 var _bgResponseConnectionDisconnect = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseConnectionGetRSSI = function(params) {
-	this.connection = params[0];
-	this.rssi = params[1];
+	this.connection = params.readUInt8(0);
+	this.rssi = params.readInt8(1);
 }
 var _bgResponseConnectionUpdate = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
-var _bgResponseConnectionChannelMapGet = function(params) {
-	this.connection = params[0];
-	this.map = params[1];
+var _bgResponseConnectionVersionUpdate = function(params) {
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
-var _bgResponseConnectionChannelMapSet = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
-}
-var _bgResponseConnectionFeaturesGet = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
-}
+
 var _bgResponseConnectionGetStatus = function(params) {
-	this.connection = params[0];
-}
-var _bgResponseConnectionRawTx = function(params) {
-	this.connection = params[0];
+	this.connection = params.readUInt8(0);
 }
 
 /***************************************
 *		Attribute Client
 ****************************************/ 
-var _bgResponseAttClientFindByType = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+var _bgResponseAttClientFindByTypeValue = function(params) {
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientReadByGroupType = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientReadByType = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientFindInformation = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 
 }
 var _bgResponseAttClientReadByHandle = function(params) {
-	this.connection = params[0];
-	this.result = bitwise.numberFromUint8Bytes(params[1], params[2]);
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientAttributeWrite = function(params) {
-	this.connection = params[0];
-	this.result = bitwise.numberFromUint8Bytes(params[1], params[2]);
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientWriteCommand = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientIndicateConfirm = function(params) {
-	this.connection = bitwise.numberFromUint8Bytes(params[0], params[1]);
+	this.connection = params.readUInt16LE(1);
 }
 var _bgResponseAttClientReadLong = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientPrepareWrite = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientExecuteWrite = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 var _bgResponseAttClientReadMultiple = function(params) {
-	this.connection = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.connection = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
 
 /***************************************
 *		Security Manager
 ****************************************/ 
 var _bgResponseSMEncryptStart = function(params) {
-	this.handle = params[0];
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[1], params[2]));
+	this.handle = params.readUInt8(0);
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(1));
 }
-var _bgResponseSMSetBondable = function(params) {
+var _bgResponseSMSetBondableMode = function(params) {
 
 }
 var _bgResponseSMDeleteBonding = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseSMPasskeyEntry = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseSMGetBonds = function(params) {
-	this.bonds = params[0];
+	this.bonds = params.readUInt8(0);
 }
 var _bgResponseSMSetOOBData = function(params) {
 
@@ -242,125 +214,118 @@ var _bgResponseGAPSetPrivacyFlags = function(params) {
 
 }
 var _bgResponseGAPSetMode = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPDiscover= function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPConnectDirect = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.connection_handle = params[2];
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.connection_handle = params.readUInt8(2);
 }
 var _bgResponseGAPEndProcedure = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPConnectSelective = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.connection_handle = params[2];
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.connection_handle = params.readUInt8(2);
 }
 var _bgResponseGAPSetFiltering = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPSetScanParameters = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPSetAdvParameters = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPSetAdvData = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseGAPSetDirectedConnectableMode = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 
 /***************************************
 *			Hardware
 ****************************************/ 
 var _bgResponseHWIOPortConfigIRQ = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWSetSoftTimer = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWADCRead = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOPortConfigDirection = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOPortConfigFunction = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOPortConfigPull = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOPortWrite = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOPortRead = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.port = params[2];
-	this.data = params[3];
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.port = params.readUInt8(2);
+	this.data = params.slice(3);
 }
 var _bgResponseHWSPIConfig = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseHWIOSPITransfer = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.channel = params[2];
-	this.data = params[3];
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.channel = params.readUInt8(2);
+	this.data = params.slice(3);
 }
 var _bgResponseHWI2CRead = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
-	this.data = params[2];
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+	this.data = params.slice(2);
 }
 var _bgResponseHWI2CWrite = function(params) {
-	this.written = params[0];
+	this.written = params.readUInt8(0);
 }
 var _bgResponseHWSetTxPower = function(params) {
 
 }
 var _bgResponseHWTimerComparator = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 
 /***************************************
 *			Test
 ****************************************/ 
-var _bgResponseTestPhyTx = function(params) {
+var _bgResponseTestChannelMode = function(params) {
 
 }
-var _bgResponseTestPhyRx = function(params) {
 
-}
-var _bgResponseTestPhyEnd = function(params) {
-	this.counter = bitwise.numberFromUint8Bytes(params[0], params[1]);
-}
-var _bgResponseTestPhyReset = function(params) {
-
-}
 var _bgResponseTestGetChannelMap = function(params) {
-	this.channel_map = params[0]
-}
-var _bgResponseTestDebug = function(params) {
-	this.output = params[0];
+	this.channel_map = params.readUInt8(0);
 }
 
 /***************************************
 *			DFU
 ****************************************/ 
-var _bgResponseDFUReset= function(params) {
-
-}
 var _bgResponseDFUFlashSetAddress = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseDFUFlashUpload = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
 }
 var _bgResponseDFUFlashUploadFinish = function(params) {
-	this.result = errorHandler.getErrorFromCode(bitwise.numberFromUint8Bytes(params[0], params[1]));
+	this.result = errorHandler.getErrorFromCode(params.readUInt16LE(0));
+}
+
+/***************************************
+*			Test
+****************************************/ 
+var _bgResponstTestChannelMode = function(params) {
+
 }
 
 
@@ -371,15 +336,14 @@ var Responses = {
 
 	// System Repsonses
 	0 	: 	[_bgResponseReset, _bgResponseHello, _bgResponseAddressGet, 
-	_bgResponseRegisterWrite, _bgResponseRegisterRead,_bgResponseGetCounters,
-	_bgResponseGetConnections, _bgResponseReadMemory, _bgResponseGetInfo,
+	null, null, _bgResponseGetCounters,
+	_bgResponseGetConnections, null, _bgResponseGetInfo,
 	_bgResponseEndpointTx, _bgResponseWhitelistAppend, _bgResponseWhitelistRemove,
 	 _bgResponseWhitelistClear, _bgResponseEndpointRx, _bgResponseSetWatermarks],
 
 	// Persistent Store Responses
 	1 	: 	[_bgResponsePSDefrag, _bgResponsePSDump, _bgResponsePSEraseAll,
-	_bgResponsePSSave, _bgResponsePSLoad, _bgResponsePSErase,
-	_bgResponsePSErasePase, _bgResponseWriteWords],
+	_bgResponsePSSave, _bgResponsePSLoad, _bgResponsePSErase],
 
 	// Attribute Database Responses
 	2 	: 	[_bgResponseAttributesWrite, _bgResponseAttributesRead, _bgResponseAttributesReadType,
@@ -387,18 +351,18 @@ var Responses = {
 
 	// Connection Responses
 	3	: 	[_bgResponseConnectionDisconnect, _bgResponseConnectionGetRSSI, _bgResponseConnectionUpdate,
-	_bgResponseConnectionChannelMapGet, _bgResponseConnectionChannelMapSet, _bgResponseConnectionFeaturesGet,
-	_bgResponseConnectionGetStatus, _bgResponseConnectionRawTx],
+	_bgResponseConnectionVersionUpdate, null, null, null, _bgResponseConnectionGetStatus],
 
 	// Attribute Client Responses
-	4	: [_bgResponseAttClientFindByType, _bgResponseAttClientReadByGroupType, _bgResponseAttClientReadByType,
+	4	: [_bgResponseAttClientFindByTypeValue, _bgResponseAttClientReadByGroupType, _bgResponseAttClientReadByType,
 	_bgResponseAttClientFindInformation, _bgResponseAttClientReadByHandle, _bgResponseAttClientAttributeWrite,
 	_bgResponseAttClientWriteCommand, _bgResponseAttClientIndicateConfirm, _bgResponseAttClientReadLong,
 	_bgResponseAttClientPrepareWrite, _bgResponseAttClientExecuteWrite, _bgResponseAttClientReadMultiple],
 
 	// Security Manager Responses
-	5 	: 	[_bgResponseSMEncryptStart, _bgResponseSMSetBondable, _bgResponseSMDeleteBonding,
- 	_bgResponseSMPasskeyEntry, _bgResponseSMGetBonds, _bgResponseSMSetOOBData, _bgResponsesSetParameters],
+	5 	: 	[_bgResponseSMEncryptStart, _bgResponseSMSetBondableMode, _bgResponseSMDeleteBonding, 
+	_bgResponsesSetParameters, _bgResponseSMPasskeyEntry, _bgResponseSMGetBonds, 
+	_bgResponseSMSetOOBData],
 
  	// GAP Responses
 	6 	: 	[_bgResponseGAPSetPrivacyFlags, _bgResponseGAPSetMode, _bgResponseGAPDiscover,
@@ -414,12 +378,12 @@ var Responses = {
 	_bgResponseHWSetTxPower, _bgResponseHWTimerComparator],
 
 	// Test Responses
-	8 	: 	[_bgResponseTestPhyTx, _bgResponseTestPhyRx, _bgResponseTestPhyEnd,
-	_bgResponseTestPhyReset, _bgResponseTestGetChannelMap, _bgResponseTestDebug],
+	8 	: 	[null, null, null, null,_bgResponseTestGetChannelMap ,null ,_bgResponseTestChannelMode],
 
 	// DFU Responses
-	9	: 	[_bgResponseDFUReset, _bgResponseDFUFlashSetAddress, _bgResponseDFUFlashUpload,
-	_bgResponseDFUFlashUploadFinish], 
+	9	: 	[null, _bgResponseDFUFlashSetAddress, _bgResponseDFUFlashUpload,
+	_bgResponseDFUFlashUploadFinish],
+
 }
 
 

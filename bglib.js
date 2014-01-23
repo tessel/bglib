@@ -1,4 +1,3 @@
-var bitwise = require('./libs/bitwise-ops');
 var libRes = require('./libs/bglib-responses');
 var libEvent = require('./libs/bglib-events');
 
@@ -278,104 +277,51 @@ bglib.prototype.ScanPolicy = {
 	gap_scan_policy_whitelist : 1
 }
 
-function Packet(packetHeader, payload) {
-	this.packetHeader = packetHeader;
+function Packet(messageType, technologyType, commandClass, commandID, payload, packetMode) {
+	this.mType = messageType;
+	this.tType = technologyType;
+	this.payloadHighBits = payload.length >> 8;
+	this.payloadLowBits = payload.length & 0xFF;
+	this.cClass = commandClass;
+	this.cID = commandID;
 	this.payload = payload;
+	this.packetMode = packetMode;
 	this.callback = null;
 }
 
 Packet.prototype.getByteArray = function(callback) {
 
-	// Create a new array
-	var packetBytes =  [];
+	// The total number of bytes will be the four header bytes plus payload
+	var packetHeader;
+	var numHeaderBytes = 4;
+	var i = 0;
 
-	// If there is no flow control, add the length byte
-	if (_bglibPMode) {
-		packetBytes.push(4 + this.packetHeader.payloadLowBits + this.packetHeader.payloadHighBits);
+	// If we're in packet mode, it's one more byte
+	if (this.packetMode) {
+		numHeaderBytes++;
+		// Create the packet
+		packetHeader =  new Buffer(numHeaderBytes);
+		// Add the length byte to the front
+		packetHeader[i++] = this.payload.length + 4;
+	}
+	else {
+		// Just make a normal header
+		packetHeader =  new Buffer(numHeaderBytes);
 	}
 
-	// Grab the packet header byte array
-	packetBytes = packetBytes.concat(this.packetHeader.getByteArray());
-	// Grab the payload byte array
-	packetBytes = packetBytes.concat(this.payload.getByteArray());
+	// Make the buffer
+
+	// Add each of the header bytes
+	packetHeader[i++] = this.mType | this.tType | (this.payload.length >> 8);
+	packetHeader[i++] = (this.payload.length & 0xFF);
+	packetHeader[i++] = this.cClass;
+	packetHeader[i++] = this.cID;
+
+	var packetBytes = Buffer.concat([packetHeader, this.payload]);
 
 	callback && callback(packetBytes);
 
 	return packetBytes;
-}
-
-
-function PacketHeader(messageType, technologyType, payload, commandClass, commandID) {
-	this.mType = messageType;
-	this.tType = technologyType;
-	this.payloadHighBits = payload.payloadLengthHighBits();
-	this.payloadLowBits = payload.payloadLengthLowBits();
-	this.cClass = commandClass;
-	this.cID = commandID;
-}
-
-PacketHeader.prototype.getByteArray = function(){
-	var bArray = [];
-	bArray.push(this.mType | this.tType | this.payloadHighBits);
-	bArray.push(this.payloadLowBits);
-	bArray.push(this.cClass);
-	bArray.push(this.cID);
-	return bArray;
-}
-
-function Payload(payloadArray) {
-	if( Array.isArray(payloadArray) ) {
-    	this.rawPayload = payloadArray;
-	} else {
-		this.rawPayload = [].concat(payloadArray);
-	}
-}
-
-Payload.prototype.payloadLengthHighBits = function() {
-	var size = this.getPayloadByteSize();
-	return bitwise.getUpperBits(size);
-}
-
-Payload.prototype.payloadLengthLowBits = function() {
-	var size = this.getPayloadByteSize();
-	return bitwise.getLowerBits(size);
-}
-
-Payload.prototype.getByteArray = function() {
-
-	var byteArray = [];
-
-	for (var i = 0; i < this.rawPayload.length; i++) {
-		var payloadEntry = this.rawPayload[i];
-		if ((typeof payloadEntry == 'number') || (typeof payloadEntry == 'string')) {
-
-			var b = bitwise.getUint8ByteVal(payloadEntry);
-
-			for (var k = 0; k < b.length; k++) {
-				byteArray.push(b[k]);
-			}
-			
-		}
-		else if (Array.isArray(payloadEntry)) {
-			for (var j = 0; j< payloadEntry.length; j++) {
-				var b = bitwise.getUint8ByteVal(payloadEntry[j]);
-
-				for (var eachObj in b) {
-					byteArray.push(b[eachObj]);
-				}
-			}
-		}
-		else {
-
-			throw new Error("You can only send numbers or strings...");
-		}
-	}
-
-	return byteArray;
-}
-
-Payload.prototype.getPayloadByteSize = function() {
-	return this.getByteArray().length;
 }
 
 var ParsedPacket = function(packet, responseType, response) {
@@ -388,13 +334,14 @@ function bglib() {
 	this.bgapiRXBuffer = [];
 	this.bgapiRXBufferPos = 0; 
 	this.bgapiRXDataLen = 0;
+	this.packetMode = false;
 } 
 
 // IF you are not using packet mode, you'll need to
 // set this variable so the length of the packets
 // are appended to the packet.
 bglib.prototype.setPacketMode = function(pMode) {
-	_bglibPMode = pMode;
+	this.packetMode = true;
 }
 
 bglib.prototype.parseIncoming = function(incomingBytes, callback) {
@@ -408,7 +355,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 		var parsedReturn = [];
 
 		if (err) {
-			console.log("There was an issue constructing a packet...");
+			if (DEBUG) console.log("There was an issue constructing a packet...");
 			return callback && callback(err, null);
 		}
 
@@ -420,56 +367,55 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 	
 			var data;
 
-			if (packet.packetHeader.cClass < 0 
-				|| packet.packetHeader.cClass > Object.keys(_bgcommandClass).length) {
+			if (packet.cClass < 0 
+				|| packet.cClass > Object.keys(_bgcommandClass).length) {
 				if (DEBUG) console.log("Packet with invalid class");
-				console.log("Popping packet with class: ", packet.packetHeader.cClass);
+				if (DEBUG) console.log("Popping packet with class: ", packet.cClass);
 				packets.splice(i, 1);
 				i--;
 				continue;
 			}
 
 			// If this packet is an event
-			if ((packet.packetHeader.mType & 0x80) == 0x80) {
+			if ((packet.mType & 0x80) == 0x80) {
 
 				if (DEBUG) console.log("We have an event!");
 
 				try {
 					var eventCreator;
 					// Check to see if we have an event object for this packet
-					if ((eventCreator=libEvent.Events[packet.packetHeader.cClass][packet.packetHeader.cID])) {
-					
+					if ((eventCreator=libEvent.Events[packet.cClass][packet.cID])) {
+
 					// Create the event object
-					data = new eventCreator(packet.payload.rawPayload);
+					data = new eventCreator(packet.payload);
 
 					// Add the parsed packet to the return array
 					 parsedReturn.push(new ParsedPacket(packet, "Event", data));
 
 					} else {
-						throw new Error("No existing event creator for packet of class " + packet.packetHeader.cClass + " and command id " +  packet.packetHeader.cID);
+						throw new Error("No existing event creator for packet of class " + packet.cClass + " and command id " +  packet.cID);
 					}
 				} catch (e) {
 					// Eventually do something smarter here
-					console.log("Yeah, it was here...")
 					 console.log(e);
 					 continue;
 				}
 			// If it was a response
-			} else if ((packet.packetHeader.mType & 0x80) == 0x00) {
+			} else if ((packet.mType & 0x80) == 0x00) {
 
 				if (DEBUG) console.log("We have a response!");
-				if (DEBUG) console.log("Class: ", packet.packetHeader.cClass, "command", packet.packetHeader.cID);
+				if (DEBUG) console.log("Class: ", packet.cClass, "command", packet.cID);
 
 				// Create the response object
 				try {
 					var responseCreator; 
-					if ((responseCreator = libRes.Responses[packet.packetHeader.cClass][packet.packetHeader.cID])) {
-						data = new responseCreator(packet.payload.rawPayload);
+					if ((responseCreator = libRes.Responses[packet.cClass][packet.cID])) {
+						data = new responseCreator(packet.payload);
 
 						// Add the parsed packet to the array
 						parsedReturn.push(new ParsedPacket(packet, "Response", data));
 					} else {
-						throw new Error("No existing response creator for packet of class " + packet.packetHeader.cClass + " and command id " +  packet.packetHeader.cID);
+						throw new Error("No existing response creator for packet of class " + packet.cClass + " and command id " +  packet.cID);
 					}
 				} catch (e) {
 					// Eventually do something smarter here
@@ -479,7 +425,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 				}
 
 			} else {
-				if (DEBUG) console.log("What's up with this mType?: ", packet.packetHeader.mType);
+				if (DEBUG) console.log("What's up with this mType?: ", packet.mType);
 				callback(new Error("Packet Parsing Error"), null);
 			}
 		};
@@ -561,27 +507,25 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 				var cls = this.bgapiRXBuffer[2];
 				var command = this.bgapiRXBuffer[3];
 
-				var payloadData = [];
-				// Set the data bits
-
 				// We may have pulled misformed packets and we
 				// need to make sure that we don't over index;
 				var payloadLen = (lolen > (this.bgapiRXBuffer.length - 4) ? (this.bgapiRXBuffer.length - 4) : lolen);
+
+				var payload = new Buffer(payloadLen);
+
 				for (var j = 0; j < payloadLen; j++) {
-					payloadData[j] = this.bgapiRXBuffer[4 + j];
+					payload[j] = this.bgapiRXBuffer[4 + j];
 				}
-
-				var payload = new Payload(payloadData);
-
-				var header = new PacketHeader(type_hilen & 0x80, type_hilen & 0x08, payload, cls, command);
-
-				var packet = new Packet(header, payload);
+				var packet = new Packet(type_hilen & 0x80, type_hilen & 0x08, cls, command, payload, this.packetMode);
 
 				// If we successfully created the packet
 				if (packet) {
+
 					packets.push(packet);
+
 					if (DEBUG) console.log("added packet: ", packet);
-				} else {
+				} 
+				else {
 					console.log('Warning, packet creation was obstructed somehow.');
 				}
 			}
@@ -593,6 +537,69 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 }
 
+/************************************************
+Temporary Buffer methods. Will be removed once Tessel
+natively supports Buffer concat and slice
+************************************************/
+Buffer.concat = function(bufArray, optionalLength) {
+	var len = 0;
+	var buffer;
+
+	if (!optionalLength) {
+		for (var i = 0; i < bufArray.length; i++) {
+			len += bufArray[i].length;
+		}
+
+		buffer = new Buffer(len);
+	} 
+	else {
+		buffer = new Buffer(optionalLength);
+	}
+
+	var index = 0;
+	for (var i = 0; i < bufArray.length; i++) {
+		for (var j = 0; j < bufArray[i].length; j++) {
+			buffer[index++] = bufArray[i][j];
+		}
+	}
+
+	return buffer;
+}
+
+Buffer.prototype.slice = function(start, end) {
+	var len = this.length;
+	start = ~~start;
+	end = (end == undefined) ? len : ~~end;
+
+	if (start < 0) {
+		start += len;
+		if (start < 0) start = 0;
+	} 
+	else if (start > len) {
+		start = len;
+	}
+
+	if (end < 0) {
+	end += len;
+	if (end < 0)
+	  end = 0;
+	} else if (end > len) {
+	end = len;
+	}
+
+	if (end < start)
+	end = start;
+
+	var newLen = end-start;
+	var buf = new Buffer(newLen);
+	for (var i = 0; i < newLen; i++) {
+		buf[i] = this[start + i];
+	}
+
+	return buf;
+}
+/*******************************************************/
+
 /**************************************************************************
 * Function: 		getPacket  
 * Description:  	Takes a command ID, returns Packet object of corresponding command
@@ -600,9 +607,6 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 *					params - An array of parameters to put in payload
 **************************************************************************/
 bglib.prototype.getPacket = function(command, params, callback) {
-
-	// Get command information
-	var payloadBytes = [];
 
 	// To allow consumers to not pass in an empty array when 
 	// they don't have params, check if the callback
@@ -616,7 +620,12 @@ bglib.prototype.getPacket = function(command, params, callback) {
 		throw new Error("Invalid Paramters passed: More than allowed.");
 	}
 
+	var self = this;
+
 	this.verifyParams(command.paramCode, params, function(err) {
+
+		// Get command information
+		var payloadBuffer = new Buffer(0);
 
 		// There's a problem with the params passed in.
 		if (err) {	
@@ -641,12 +650,13 @@ bglib.prototype.getPacket = function(command, params, callback) {
 					// If it's already separated into an array for us
 					if (Array.isArray(param)) {
 
-						// Just concat that array
-						payloadBytes = payloadBytes.concat(param);
+						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
+
 					} else {
 						// Add each byte of param to array
-						payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 4));
-
+						var rBuf = new Buffer(4);
+						rBuf.writeUInt32LE(param, 0);
+						payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
 					}
 
 					break;
@@ -654,15 +664,16 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				// This parameter should be 16 bits
 				case 5:
 				case 4:
-					// If it's already separated into an array for us
+				// If it's already separated into an array for us
 					if (Array.isArray(param)) {
 
-						// Just concat that array
-						payloadBytes = payloadBytes.concat(param);
+						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
+
 					} else {
 						// Add each byte of param to array
-						payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 2));
-
+						var rBuf = new Buffer(2);
+						rBuf.writeUInt16LE(param, 0);
+						payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
 					}
 
 					break;
@@ -671,69 +682,66 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				case 3:
 				case 2:
 					// Add each byte of param to array
-					payloadBytes = payloadBytes.concat(bitwise.numberIntoNLengthByteArray(param, 1));
+					var rBuf = new Buffer(1);
+					rBuf.writeUInt8(param, 0);
+					payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
 
 					break
 				// This parameter is a data length and uint8 array
 				case 9:
 				case 8:
-					var data_len = param.length;
+					var data = [];
+					var dataLength = param.length;
 
-					payloadBytes.push(data_len);
+					var totalPacketSize = dataLength + command.header.lolen;
 
-					var totalPacketSize = data_len + command.header.lolen;
+					command.header.payloadLowBits = totalPacketSize & 0xFF
+					command.header.payloadHighBits = totalPacketSize >> 8
+					
+					data.push(dataLength);
+					data.push(param);
 
-					command.header.payloadLowBits = bitwise.getLowerBits(totalPacketSize);
-					command.header.payloadHighBits = bitwise.getUpperBits(totalPacketSize);
-
-
-					payloadBytes.push(param);
+					var dataBuf = new Buffer(data);
+					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
 
 					break;
 
 				// This parameter is a hardware address
 				case 10:
-					payloadBytes = payloadBytes.concat(param);
+					payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
+
 					break;
 
 				// uint16 array (and data length)
 				case 11:
 
-					var data_len = param.length;
+					var data = [];
+					var dataLength = param.length;
 
-					payloadBytes.push(bitwise.getLowerBits(data_len));
-					payloadBytes.push(bitwise.getUpperBits(data_len));
 
-					var totalPacketSize = data_len + command.header.lolen;
-					command.header.payloadLowBits = bitwise.getLowerBits(totalPacketSize);
-					command.header.payloadHighBits = bitwise.getUpperBits(totalPacketSize);
+					var totalPacketSize = dataLength + command.header.lolen;
+					command.header.payloadLowBits = totalPacketSize & 0xFF
+					command.header.payloadHighBits = totalPacketSize >> 8
+					
+					data.push(dataLength);
+					data.push(param);
 
-					// param = params.shift();
-					payloadBytes.push(param);
+					var dataBuf = new Buffer(data);
+					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
+
 					break;
 			}
 
 			paramCode  = paramCode >> 4;
 		}
 
-
-		// Create a new payload
-		var payload = new Payload(payloadBytes);
-
-		// Get the size of the payload to make the packet header
-		var payloadSize = payload.getPayloadByteSize();
-
-
-		// Make the packet header
-		var header = new PacketHeader(_bgmessageType.Command,
-			_bgtechnologyType.Bluetooth,
-			payload, 
-			command.header.cls, 
-			command.header.command
-			);
-
 		// Make the packet with the payload and header
-		var packet = new Packet(header, payload);
+		var packet = new Packet(_bgmessageType.Command,
+			_bgtechnologyType.Bluetooth,
+			command.header.cls, 
+			command.header.command, 
+			payloadBuffer,
+			self.packetMode);
 	
 		// Call the callback
 		callback && callback(null, packet);
@@ -745,12 +753,8 @@ bglib.prototype.getPacket = function(command, params, callback) {
 
 bglib.prototype.verifyParams = function(paramCode, params, callback) {
 
-	numParams = 0;
-
-
 	// If there are no params
 	if (!params) {
-
 		// And the param code indicates that there should be, throw an err
 		if (paramCode)  return callback(new Error("Invalid parameters passed"));
 
@@ -758,11 +762,7 @@ bglib.prototype.verifyParams = function(paramCode, params, callback) {
 		else return callback(null);
 	}
 
-	// Calculate the number of params there should be
-	while (paramCode & 0xF) {
-		numParams++;
-		paramCode = paramCode >> 4;
-	}
+	var numParams = this.numParamsFromCode(paramCode);
 
 	// Make sure the number passed in is correct
 	if (numParams != params.length) {
@@ -770,6 +770,17 @@ bglib.prototype.verifyParams = function(paramCode, params, callback) {
 	} else {
 		return callback(null);
 	}
+}
+
+bglib.prototype.numParamsFromCode = function(paramCode) {
+	var numParams = 0;
+	// Calculate the number of params there should be
+	while (paramCode & 0xF) {
+		numParams++;
+		paramCode = paramCode >> 4;
+	}
+
+	return numParams;
 }
 
 bglib.prototype.api = {
