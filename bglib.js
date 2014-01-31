@@ -3,7 +3,7 @@ var libEvent = require('./libs/bglib-events');
 
 var _bglibPMode = 0;
 
-var DEBUG = 0;
+var DEBUG = 1;
 
 var _bgmessageType = {
 	Command : 0 << 7,
@@ -386,11 +386,17 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 					// Check to see if we have an event object for this packet
 					if ((eventCreator=libEvent.Events[packet.cClass][packet.cID])) {
 
+					console.log("Fetched but not created");
+
 					// Create the event object
 					data = new eventCreator(packet.payload);
 
+					console.log("created but not pushed...");
+
 					// Add the parsed packet to the return array
 					 parsedReturn.push(new ParsedPacket(packet, "Event", data));
+
+					 console.log("pushed...");
 
 					} else {
 						throw new Error("No existing event creator for packet of class " + packet.cClass + " and command id " +  packet.cID);
@@ -537,7 +543,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 /************************************************
 Temporary Buffer methods. Will be removed once Tessel
-natively supports Buffer concat and slice
+natively supports Buffer.concat 
 ************************************************/
 Buffer.concat = function(bufArray, optionalLength) {
 	var len = 0;
@@ -564,38 +570,6 @@ Buffer.concat = function(bufArray, optionalLength) {
 	return buffer;
 }
 
-Buffer.prototype.slice = function(start, end) {
-	var len = this.length;
-	start = ~~start;
-	end = (end == undefined) ? len : ~~end;
-
-	if (start < 0) {
-		start += len;
-		if (start < 0) start = 0;
-	} 
-	else if (start > len) {
-		start = len;
-	}
-
-	if (end < 0) {
-	end += len;
-	if (end < 0)
-	  end = 0;
-	} else if (end > len) {
-	end = len;
-	}
-
-	if (end < start)
-	end = start;
-
-	var newLen = end-start;
-	var buf = new Buffer(newLen);
-	for (var i = 0; i < newLen; i++) {
-		buf[i] = this[start + i];
-	}
-
-	return buf;
-}
 /*******************************************************/
 
 /**************************************************************************

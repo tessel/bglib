@@ -155,12 +155,21 @@ var _bgEventSMBondStatus = function(params) {
 *		GAP Events
 ****************************************/ 
 var _bgEventGAPScanResponse = function(params) {
+	console.log("In scan response");
+	console.log(params.length);
+	console.log("In scan 1");
 	this.rssi = params.readInt8(0);
+	console.log("In scan 2");
 	this.packet_type = params.readUInt8(1);
+	console.log("In scan 3");
 	this.sender = params.slice(2, 8);
+	console.log("In scan 4");
 	this.address_type = params.readUInt8(8);
+	console.log("In scan 5");
 	this.bond = params.readUInt8(9);
+	console.log("In scan 6");
 	this.data = params.slice(10);
+	console.log("Out scan response");
 }
 /***************************************
 *		Hardware Events
