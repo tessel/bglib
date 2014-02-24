@@ -1,16 +1,23 @@
 {
   "name": "bglib",
-  "version": "0.0.82",
+  "version": "0.0.15",
   "description": "Create and parse packets for the BlueGiga BLE112 and BLE113",
   "main": "bglib.js",
   "scripts": {
     "test": "./test/test.js"
   },
-  "author": "Jon McKay <jon@technical.io>",
+  "author": {
+    "name": "Jon McKay",
+    "email": "jon@technical.io"
+  },
   "license": "MIT",
   "readmeFilename": "README.md",
   "directories": {
-    "libs": "libraries"
+    "lib": "libraries",
+    "test": "Test script"
+  },
+  "hardware" : {
+    "./test" : false
   },
   "keywords": [
     "bluetooth",
@@ -20,5 +27,11 @@
     "bluegiga",
     "low",
     "energy"
-  ]
+  ],
+  "dependencies": {
+    "ble-ad-parser": "*"
+  },
+  "readme": "##BGLib\nBGLib is a Node library for sending and receiving packets from BlueGiga BLE devices (currently supports ble112 and ble113). It is still under heavy development and will likely not work as intended for a while. It is currently being developed by Technical Machine to support our Tessel BLE module.\n\nI still need to replace bitwise functions with Buffers once those are fully functional on Tessel.\n\n##Install\n```\nnpm install bglib\n```\n\n\n##Examples\n\n###Creating a packet\n\n```\nvar bglib = require('bglib');\n\nbglib.getPacket(bglib.api.systemHello); // Returns [0, 0, 0, 1]\n\n// Use Packet Mode if you don't have flow control\n// It adds a length byte to the front of every packet\nbglib.setPacketMode(true);\nbglib.getPacket(bglib.api.systemHello); // Returns [4, 0, 0, 0, 1]\n\nbglib.getPacket(bglib.api.gapDiscover, [1, 0], function(err, response) {\n\tconsole.log(\"Packet: \", response);\n})\n```\n###Parsing Incoming Data\n\n```\nvar bglib = require('bglib');\n\nvar incomingBytes = [ 128, 38, 6, 0, 189, 0, 108, 189, 40, 93, 28, 216, 1, 255, 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 191, 162, 189, 1, 70, 125, 110, 56, 88, 171, 173, 5, 22, 10, 24, 7, 4];\n\nbglib.parseIncoming(incomingBytes, function(err, parsedPackets) {\n\tconsole.log(\"Parsed packets: \", parsedPackets);\n\n\t// BGLib will automatically parse each packet into the values stated by the datasheet\n\t// depending on what type of event/response it is. Below is an example for the discovered\n\t// peripheral event that was passed in:\n\tconsole.log(parsedPackets[0].packet_type) // 0\n\tconsole.log(parsedPackets[0].sender) // [ 108, 189, 40, 93, 28, 216 ]\n\tconsole.log(parsedPackets[0].address_type) // 1\n\tconsole.log(parsedPackets[0].bond) // 255\n\tconsole.log(parsedPackets[0].data) // [ 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 191, 162, 189, 1, 70, 125, 110, 56, 88, 171, 173, 5, 22, 10, 24, 7, 4 ]\n\tconsole.log(parsedPackets[0].rssi) // -100\n});\n```\n\nThe library will hold the current state of the packets so you can pass in pieces of a packet and it will return the entire parsed packet when it has all been passed in.\n\n###Thanks\nJRowberg deserves a special shout-out. Some of the code is modeled after [his Arduino bglib work](https://github.com/jrowberg/bglib).\n",
+  "_id": "bglib@0.0.14",
+  "_from": "bglib@0.0.14"
 }

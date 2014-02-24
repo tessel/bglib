@@ -19,9 +19,9 @@ bglib.getPacket(bglib.api.gapConnectDirect, [[108, 189, 40, 93, 28, 216], 1, 25,
 	assert(!err, "Error creating the complex connect packet.");
 	assert(response.cID == 3 
 		&& response.cClass == 6, "Invalid packet created.");
+	console.log("Packet", response);
 	console.log("Complex Packet Creation Passed.");
 });
-
 
 bglib.getPacket(bglib.api.systemHello, ["Invalid", "params"], function(err, response) {
 	assert(err, "Unable to detect invalid number of parameters.");
@@ -40,7 +40,7 @@ var incoming = [128, 38, 6, 0, 185, 0, 108, 189, 40, 93, 28, 216, 1, 255, 27, 2,
 bglib.parseIncoming(incoming, function(err, parsedPackets) {
 	assert(!err, "There was an error parsing packets: " + err);
 	assert(parsedPackets.length == 4, "Packets not parsed correctly");
-
+	console.log(parsedPackets[0].response.data)
 	console.log("Packet Parsing Passed.");
 });
 

@@ -1,9 +1,7 @@
-var libRes = require('./libs/bglib-responses');
-var libEvent = require('./libs/bglib-events');
+var libRes = require('./lib/bglib-responses');
+var libEvent = require('./lib/bglib-events');
 
-var _bglibPMode = 0;
-
-var DEBUG = 1;
+var DEBUG = 0;
 
 var _bgmessageType = {
 	Command : 0 << 7,
@@ -331,17 +329,21 @@ var ParsedPacket = function(packet, responseType, response) {
 }
 
 function bglib() {
+	this.resetParser();
+	this.packetMode = false;
+} 
+
+bglib.prototype.resetParser = function() {
 	this.bgapiRXBuffer = [];
 	this.bgapiRXBufferPos = 0; 
 	this.bgapiRXDataLen = 0;
-	this.packetMode = false;
-} 
+}
 
 // IF you are not using packet mode, you'll need to
 // set this variable so the length of the packets
 // are appended to the packet.
 bglib.prototype.setPacketMode = function(pMode) {
-	this.packetMode = true;
+	this.packetMode = pMode;
 }
 
 bglib.prototype.parseIncoming = function(incomingBytes, callback) {
@@ -386,17 +388,11 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 					// Check to see if we have an event object for this packet
 					if ((eventCreator=libEvent.Events[packet.cClass][packet.cID])) {
 
-					console.log("Fetched but not created");
-
 					// Create the event object
 					data = new eventCreator(packet.payload);
 
-					console.log("created but not pushed...");
-
 					// Add the parsed packet to the return array
 					 parsedReturn.push(new ParsedPacket(packet, "Event", data));
-
-					 console.log("pushed...");
 
 					} else {
 						throw new Error("No existing event creator for packet of class " + packet.cClass + " and command id " +  packet.cID);
@@ -451,7 +447,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 	// Create the packets
 	for (var i = 0; i < incomingBytes.length; i++) {
 
-		// Gran the next byte
+		// Gran the callback byte
 		var ch = incomingBytes[i];
 
 		// If this is the beginning of the packet
@@ -468,7 +464,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 				if (DEBUG) console.log("Warning: Packet Frame Issue.");
 
-				// Try to move forward to the next packet frame.
+				// Try to move forward to the callback packet frame.
 				while (i < incomingBytes.length) {
 					// If it's an event or response header
 					if (incomingBytes[i] == 0x80 || incomingBytes[i] == 0x00) {
@@ -520,6 +516,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 				for (var j = 0; j < payloadLen; j++) {
 					payload[j] = this.bgapiRXBuffer[4 + j];
 				}
+
 				var packet = new Packet(type_hilen & 0x80, type_hilen & 0x08, cls, command, payload, this.packetMode);
 
 				// If we successfully created the packet
@@ -541,33 +538,10 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 
 }
 
-/************************************************
-Temporary Buffer methods. Will be removed once Tessel
-natively supports Buffer.concat 
-************************************************/
-Buffer.concat = function(bufArray, optionalLength) {
-	var len = 0;
-	var buffer;
-
-	if (!optionalLength) {
-		for (var i = 0; i < bufArray.length; i++) {
-			len += bufArray[i].length;
-		}
-
-		buffer = new Buffer(len);
-	} 
-	else {
-		buffer = new Buffer(optionalLength);
-	}
-
-	var index = 0;
-	for (var i = 0; i < bufArray.length; i++) {
-		for (var j = 0; j < bufArray[i].length; j++) {
-			buffer[index++] = bufArray[i][j];
-		}
-	}
-
-	return buffer;
+bglib.prototype.debugPacket = function(packet) {
+  for (var i = 0; i < packet.length; i++) {
+    console.log("Byte at index", i, "is", packet[i]);
+  }
 }
 
 /*******************************************************/
@@ -580,7 +554,7 @@ Buffer.concat = function(bufArray, optionalLength) {
 **************************************************************************/
 bglib.prototype.getPacket = function(command, params, callback) {
 
-	// To allow consumers to not pass in an empty array when 
+	// To allow users to not pass in an empty array when 
 	// they don't have params, check if the callback
 	// was passed as second argument
 	if (!callback && typeof params == "function") {
@@ -604,18 +578,19 @@ bglib.prototype.getPacket = function(command, params, callback) {
 			callback && callback(err, null);
 			return;
 		}
+
 		var paramCode = command.paramCode;
 
 		// While there are still more params to add
 		while (paramCode) {
 
-			// Load the next parameter
+			// Get the next parameter
 			var param = params.shift();
 
-			// Grab the next param code
+			// Grab the param type
 			switch(paramCode & 0xF) {
 
-				// This parameter should be 32 bits
+				// This parameter is 32 bits
 				case 7:
 				case 6:
 
@@ -624,7 +599,8 @@ bglib.prototype.getPacket = function(command, params, callback) {
 
 						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
 
-					} else {
+					} 
+					else {
 						// Add each byte of param to array
 						var rBuf = new Buffer(4);
 						rBuf.writeUInt32LE(param, 0);
@@ -662,51 +638,59 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				// This parameter is a data length and uint8 array
 				case 9:
 				case 8:
-					var data = [];
+
+					if (!Array.isArray(param) && typeof param != "string") {
+						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
+					}
 					var dataLength = param.length;
 
 					var totalPacketSize = dataLength + command.header.lolen;
 
-					command.header.payloadLowBits = totalPacketSize & 0xFF
-					command.header.payloadHighBits = totalPacketSize >> 8
-					
-					data.push(dataLength);
-					data.push(param);
+					command.header.payloadLowBits = totalPacketSize & 0xFF;
+					command.header.payloadHighBits = totalPacketSize >> 8;
 
-					var dataBuf = new Buffer(data);
+					var dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(param)], dataLength + 1);
+
 					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
-
+					
 					break;
 
 				// This parameter is a hardware address
 				case 10:
-					payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
+					var address; 
+					if (Array.isArray(param)) {
+						address = new Buffer(address);
+					}
+					if (Buffer.isBuffer(param)) {
+						address = param;
+					}
+					payloadBuffer = Buffer.concat([payloadBuffer, address]);
 
 					break;
 
 				// uint16 array (and data length)
 				case 11:
 
-					var data = [];
-					var dataLength = param.length;
-
+					if (!Array.isArray(param) && typeof param != "string") {
+						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
+					}
+					// Times two because these are uint16s
+					var dataLength = param.length * 2;
 
 					var totalPacketSize = dataLength + command.header.lolen;
-					command.header.payloadLowBits = totalPacketSize & 0xFF
-					command.header.payloadHighBits = totalPacketSize >> 8
-					
-					data.push(dataLength);
-					data.push(param);
 
-					var dataBuf = new Buffer(data);
+					command.header.payloadLowBits = totalPacketSize & 0xFF;
+					command.header.payloadHighBits = totalPacketSize >> 8;
+
+					var dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(param)], dataLength + 1);
+
 					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
-
+					
 					break;
 			}
 
 			paramCode  = paramCode >> 4;
 		}
-
 		// Make the packet with the payload and header
 		var packet = new Packet(_bgmessageType.Command,
 			_bgtechnologyType.Bluetooth,
@@ -728,7 +712,7 @@ bglib.prototype.verifyParams = function(paramCode, params, callback) {
 	// If there are no params
 	if (!params) {
 		// And the param code indicates that there should be, throw an err
-		if (paramCode)  return callback(new Error("Invalid parameters passed"));
+		if (paramCode)  return callback(new Error("Need to pass in parameters"));
 
 		// If there shouldn't be, just return
 		else return callback(null);
@@ -738,7 +722,7 @@ bglib.prototype.verifyParams = function(paramCode, params, callback) {
 
 	// Make sure the number passed in is correct
 	if (numParams != params.length) {
-		return callback(new Error("Invalid parameters passed"));
+		return callback(new Error("Invalid number of parameters passed for method"));
 	} else {
 		return callback(null);
 	}
@@ -755,7 +739,7 @@ bglib.prototype.numParamsFromCode = function(paramCode) {
 	return numParams;
 }
 
-bglib.prototype.api = {
+bglib.api = {
 
 	// System
 	systemReset : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 1, cls : _bgcommandClass.System, command : _bgcommandIDs.System_Reset}, paramCode: 0x02},
@@ -806,15 +790,15 @@ bglib.prototype.api = {
 
 	// Attribute Client
 	attClientFindByTypeValue : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 8, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_By_Type_Value}, paramCode: 0x84442},
-	attClientReadByGroupType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Group_Type}, paramCode: 0x84442},
-	attClientReadByType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, cid : _bgcommandIDs.Attclient_Read_By_Type}, paramCode: 0x84442},
+	attClientReadByGroupType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Group_Type}, paramCode: 0x8442},
+	attClientReadByType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Type}, paramCode: 0x8442},
 	attClientFindInformation : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 5, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Find_Information}, paramCode: 0x442},
 	attClientReadByHandle : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_By_Handle}, paramCode: 0x42},
 	attClientAttributeWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 4, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Attribute_Write}, paramCode: 0x842},
 	attClientWriteCommand : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 4, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Write_Command}, paramCode: 0x842},
 	attClientIndicateConfirm : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 1, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Indicate_Confirm}, paramCode: 0x02},
-	attClientReadLong : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_Long}, paramCode: 0x8442},
-	attClientPrepareWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Prepare_Write}, paramCode: 0x22},
+	attClientReadLong : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_Long}, paramCode: 0x42},
+	attClientPrepareWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Prepare_Write}, paramCode: 0x8442},
 	attClientExecuteWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Execute_Write}, paramCode: 0x22},
 	attClientReadMultiple : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.AttributeClient, command : _bgcommandIDs.Attclient_Read_Multiple}, paramCode: 0x82},
 
