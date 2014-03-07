@@ -331,11 +331,11 @@ var ParsedPacket = function(packet, responseType, response) {
 function bglib() {
 	this.resetParser();
 	this.packetMode = false;
-} 
+}
 
 bglib.prototype.resetParser = function() {
 	this.bgapiRXBuffer = [];
-	this.bgapiRXBufferPos = 0; 
+	this.bgapiRXBufferPos = 0;
 	this.bgapiRXDataLen = 0;
 }
 
@@ -366,10 +366,10 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 			// Parse the response into appropriate Params
 			var packet = packets[i];
-	
+
 			var data;
 
-			if (packet.cClass < 0 
+			if (packet.cClass < 0
 				|| packet.cClass > Object.keys(_bgcommandClass).length) {
 				if (DEBUG) console.log("Packet with invalid class");
 				if (DEBUG) console.log("Popping packet with class: ", packet.cClass);
@@ -410,7 +410,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 
 				// Create the response object
 				try {
-					var responseCreator; 
+					var responseCreator;
 					if ((responseCreator = libRes.Responses[packet.cClass][packet.cID])) {
 						data = new responseCreator(packet.payload);
 
@@ -482,7 +482,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 				// return;
 				continue;
 			}
-		} 
+		}
 		// If this is not the first byte of the packet
 		else {
 
@@ -525,7 +525,7 @@ bglib.prototype.reconstructPackets = function(incomingBytes, callback) {
 					packets.push(packet);
 
 					if (DEBUG) console.log("added packet: ", packet);
-				} 
+				}
 				else {
 					console.log('Warning, packet creation was obstructed somehow.');
 				}
@@ -547,14 +547,14 @@ bglib.prototype.debugPacket = function(packet) {
 /*******************************************************/
 
 /**************************************************************************
-* Function: 		getPacket  
+* Function: 		getPacket
 * Description:  	Takes a command ID, returns Packet object of corresponding command
 * Params: 			command - the command ID of the relevant command
 *					params - An array of parameters to put in payload
 **************************************************************************/
 bglib.prototype.getPacket = function(command, params, callback) {
 
-	// To allow users to not pass in an empty array when 
+	// To allow users to not pass in an empty array when
 	// they don't have params, check if the callback
 	// was passed as second argument
 	if (!callback && typeof params == "function") {
@@ -574,7 +574,7 @@ bglib.prototype.getPacket = function(command, params, callback) {
 		var payloadBuffer = new Buffer(0);
 
 		// There's a problem with the params passed in.
-		if (err) {	
+		if (err) {
 			callback && callback(err, null);
 			return;
 		}
@@ -599,7 +599,7 @@ bglib.prototype.getPacket = function(command, params, callback) {
 
 						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
 
-					} 
+					}
 					else {
 						// Add each byte of param to array
 						var rBuf = new Buffer(4);
@@ -639,25 +639,35 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				case 9:
 				case 8:
 
-					if (!Array.isArray(param) && typeof param != "string") {
+					var dataBuf;
+
+					if (Buffer.isBuffer(param)) {
+						dataBuf = param;
+					}
+					else if (Array.isArray(param) || typeof param == "string") {
+						dataBuf = new Buffer(param);
+					}
+					else {
+						console.log("This one is throwing it off", param);
 						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
 					}
-					var dataLength = param.length;
+
+					var dataLength = dataBuf.length;
 
 					var totalPacketSize = dataLength + command.header.lolen;
 
 					command.header.payloadLowBits = totalPacketSize & 0xFF;
 					command.header.payloadHighBits = totalPacketSize >> 8;
 
-					var dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(param)], dataLength + 1);
+					dataBuf = Buffer.concat([new Buffer([dataLength]), dataBuf], dataLength + 1);
 
 					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
-					
+
 					break;
 
 				// This parameter is a hardware address
 				case 10:
-					var address; 
+					var address;
 					if (Array.isArray(param)) {
 						address = new Buffer(address);
 					}
@@ -671,7 +681,15 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				// uint16 array (and data length)
 				case 11:
 
-					if (!Array.isArray(param) && typeof param != "string") {
+					var dataBuf;
+
+					if (Buffer.isBuffer(param)) {
+						dataBuf = param;
+					}
+					else if (Array.isArray(param) || typeof param == "string") {
+						dataBuf = new Buffer(param);
+					}
+					else {
 						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
 					}
 					// Times two because these are uint16s
@@ -682,10 +700,10 @@ bglib.prototype.getPacket = function(command, params, callback) {
 					command.header.payloadLowBits = totalPacketSize & 0xFF;
 					command.header.payloadHighBits = totalPacketSize >> 8;
 
-					var dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(param)], dataLength + 1);
+					dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(dataBuf)], dataLength + 1);
 
 					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
-					
+
 					break;
 			}
 
@@ -694,11 +712,11 @@ bglib.prototype.getPacket = function(command, params, callback) {
 		// Make the packet with the payload and header
 		var packet = new Packet(_bgmessageType.Command,
 			_bgtechnologyType.Bluetooth,
-			command.header.cls, 
-			command.header.command, 
+			command.header.cls,
+			command.header.command,
 			payloadBuffer,
 			self.packetMode);
-	
+
 		// Call the callback
 		callback && callback(null, packet);
 
@@ -772,7 +790,7 @@ bglib.api = {
 	// Attribute Database
 	attributesWrite : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 4, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Write}, paramCode: 0x824},
 	attributesRead : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 4, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Read}, paramCode: 0x44},
-	attributesReadType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Read_Type}, paramCode: 0x04},	
+	attributesReadType : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_Read_Type}, paramCode: 0x04},
 	attributesUserReadResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_User_Read_Response}, paramCode: 0x822},
 	attributesUserWriteResponse : {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.AttributeDatabase, command : _bgcommandIDs.Attributes_User_Write_Response}, paramCode: 0x22},
 
@@ -815,7 +833,7 @@ bglib.api = {
 	// GAP
 	gapSetPrivacyFlags: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Privacy_Flags}, paramCode: 0x22},
 	gapSetMode: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Set_Mode}, paramCode: 0x22},
-	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 1, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x02},	
+	gapDiscover: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 1, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Discover}, paramCode: 0x02},
 	gapConnectDirect: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 0xf, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Direct}, paramCode: 0x44442a},
 	gapEndProcedure: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 0, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_End_Procedure}, paramCode: 0x00},
 	gapConnectSelective: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 8, cls : _bgcommandClass.GenericAccessProfile, command : _bgcommandIDs.GAP_Connect_Selective}, paramCode: 0x4444},
@@ -857,5 +875,4 @@ bglib.api = {
 	dfuFlashUploadFinish: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 0, cls : _bgcommandClass.DFU, command : _bgcommandIDs.DFU_Flash_Upload_Finish}, paramCode: 0x04},
 }
 
-module.exports = new bglib();
-module.exports.bglib = bglib;
+module.exports = bglib;
