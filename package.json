@@ -30,5 +30,5 @@
   ],
   "dependencies": {
     "ble-ad-parser": "*"
-  },
+  }
 }
