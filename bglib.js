@@ -557,16 +557,10 @@ bglib.prototype.getPacket = function(command, params, callback) {
 	// To allow users to not pass in an empty array when
 	// they don't have params, check if the callback
 	// was passed as second argument
-	if (!callback && typeof params == "function") {
+	if ((!callback && typeof params == "function") || (!params && !callback)) {
 		callback = params;
 		params = [];
 	}
-
-	if (typeof callback != "function") {
-		throw new Error("Invalid Paramters passed: More than allowed.");
-	}
-
-	var self = this;
 
 	this.verifyParams(command.paramCode, params, function(err) {
 
@@ -715,14 +709,14 @@ bglib.prototype.getPacket = function(command, params, callback) {
 			command.header.cls,
 			command.header.command,
 			payloadBuffer,
-			self.packetMode);
+			this.packetMode);
 
 		// Call the callback
 		callback && callback(null, packet);
 
 		// Return the packet if it was lazily created
 		return packet;
-	});
+	}.bind(this));
 }
 
 bglib.prototype.verifyParams = function(paramCode, params, callback) {
