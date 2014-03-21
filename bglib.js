@@ -351,7 +351,7 @@ bglib.prototype.parseIncoming = function(incomingBytes, callback) {
 	var self = this;
 
 	// Parse and put packets back together
-	this.reconstructPackets(incomingBytes, function(err, packets) {
+	this.reconstructPackets(incomingBytes, function createResponse(err, packets) {
 
 		// Array for parsed responses/events
 		var parsedReturn = [];
@@ -846,7 +846,7 @@ bglib.api = {
 	// Hardware
 	hwIOPortConfigIRQ: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_IRQ}, paramCode: 0x222},
 	hwSetSoftTimer: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 6, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_Set_Soft_Timer}, paramCode: 0x226},
-	hwADCReadID: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_ADC_Read}, paramCode: 0x222},
+	hwADCRead: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_ADC_Read}, paramCode: 0x222},
 	hwIOPortConfigDirection: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Direction}, paramCode: 0x22},
 	hwIOPortConfigFunction: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 2, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Function}, paramCode: 0x22},
 	hwIOPortConfigPull: {header : {tType: _bgtechnologyType.Bluetooth, mType: _bgmessageType.Command, lolen : 3, cls : _bgcommandClass.Hardware, command : _bgcommandIDs.HW_IO_Port_Config_Pull}, paramCode: 0x222},
