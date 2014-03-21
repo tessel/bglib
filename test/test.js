@@ -1,5 +1,4 @@
 // An embarrasingly unexhaustive test of bglib functionality
-
 var assert = require('assert');
 
 var bg = require('../bglib');
