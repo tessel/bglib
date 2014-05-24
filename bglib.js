@@ -651,7 +651,6 @@ bglib.prototype.getPacket = function(command, params, callback) {
 						dataBuf = new Buffer(param);
 					}
 					else {
-						console.log("This one is throwing it off", param);
 						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
 					}
 

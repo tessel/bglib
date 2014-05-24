@@ -1,6 +1,6 @@
 {
   "name": "bglib",
-  "version": "0.0.43",
+  "version": "0.0.44",
   "description": "Create and parse packets for the BlueGiga BLE112 and BLE113",
   "main": "bglib.js",
   "scripts": {
