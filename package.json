@@ -1,6 +1,6 @@
 {
   "name": "bglib",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "Create and parse packets for the BlueGiga BLE112 and BLE113",
   "main": "bglib.js",
   "scripts": {
@@ -11,13 +11,12 @@
     "email": "jon@technical.io"
   },
   "license": "MIT",
-  "readmeFilename": "README.md",
   "directories": {
     "lib": "libraries",
     "test": "Test script"
   },
-  "hardware" : {
-    "./test" : false
+  "hardware": {
+    "./test": false
   },
   "keywords": [
     "bluetooth",
@@ -30,5 +29,29 @@
   ],
   "dependencies": {
     "bleadvertise": "*"
-  }
+  },
+  "_id": "bglib@0.0.6",
+  "dist": {
+    "shasum": "3040724120bd55bdc996a03f3618c026db6cbd3b",
+    "tarball": "http://registry.npmjs.org/bglib/-/bglib-0.0.6.tgz"
+  },
+  "_from": "bglib@*",
+  "_npmVersion": "1.4.3",
+  "_npmUser": {
+    "name": "johnnyman727",
+    "email": "johnnyman727@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "johnnyman727",
+      "email": "johnnyman727@gmail.com"
+    },
+    {
+      "name": "technicalmachine",
+      "email": "team@technical.io"
+    }
+  ],
+  "_shasum": "3040724120bd55bdc996a03f3618c026db6cbd3b",
+  "_resolved": "https://registry.npmjs.org/bglib/-/bglib-0.0.6.tgz",
+  "readme": "ERROR: No README data found!"
 }

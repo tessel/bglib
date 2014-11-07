@@ -561,190 +561,186 @@ bglib.prototype.debugPacket = function(packet) {
 * Params: 			command - the command ID of the relevant command
 *					params - An array of parameters to put in payload
 **************************************************************************/
-bglib.prototype.getPacket = function(command, params, callback) {
+bglib.prototype.getPacket = function(command, params) {
 
 	// To allow users to not pass in an empty array when
 	// they don't have params, check if the callback
 	// was passed as second argument
-	if ((!callback && typeof params == "function") || (!params && !callback)) {
-		callback = params;
+	if (!params) {
 		params = [];
 	}
 
-	this.verifyParams(command.paramCode, params, function(err) {
+	var err = this.verifyParams(command.paramCode, params);
 
-		// Get command information
-		var payloadBuffer = new Buffer(0);
+	// There's a problem with the params passed in.
+	if (err) {
+		throw err;
+	}
 
-		// There's a problem with the params passed in.
-		if (err) {
-			callback && callback(err, null);
-			return;
-		}
+	// Get command information
+	var payloadBuffer = new Buffer(0);
 
-		var paramCode = command.paramCode;
+	var paramCode = command.paramCode;
 
-		// While there are still more params to add
-		while (paramCode) {
+	// While there are still more params to add
+	while (paramCode) {
 
-			// Get the next parameter
-			var param = params.shift();
+		// Get the next parameter
+		var param = params.shift();
 
-			// Grab the param type
-			switch(paramCode & 0xF) {
+		// Grab the param type
+		switch(paramCode & 0xF) {
 
-				// This parameter is 32 bits
-				case 7:
-				case 6:
+			// This parameter is 32 bits
+			case 7:
+			case 6:
 
-					// If it's already separated into an array for us
-					if (Array.isArray(param)) {
-
-						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
-
-					}
-					else {
-						// Add each byte of param to array
-						var rBuf = new Buffer(4);
-						rBuf.writeUInt32LE(param, 0);
-						payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
-					}
-
-					break;
-
-				// This parameter should be 16 bits
-				case 5:
-				case 4:
 				// If it's already separated into an array for us
-					if (Array.isArray(param)) {
+				if (Array.isArray(param)) {
 
-						payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
+					payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
 
-					} else {
-						// Add each byte of param to array
-						var rBuf = new Buffer(2);
-						rBuf.writeUInt16LE(param, 0);
-						payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
-					}
-
-					break;
-
-				// This parameter is 8 bits
-				case 3:
-				case 2:
+				}
+				else {
 					// Add each byte of param to array
-					var rBuf = new Buffer(1);
-					rBuf.writeUInt8(param, 0);
+					var rBuf = new Buffer(4);
+					rBuf.writeUInt32LE(param, 0);
 					payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
+				}
 
-					break
-				// This parameter is a data length and uint8 array
-				case 9:
-				case 8:
+				break;
 
-					var dataBuf;
+			// This parameter should be 16 bits
+			case 5:
+			case 4:
+			// If it's already separated into an array for us
+				if (Array.isArray(param)) {
 
-					if (Buffer.isBuffer(param)) {
-						dataBuf = param;
-					}
-					else if (Array.isArray(param) || typeof param == "string") {
-						dataBuf = new Buffer(param);
-					}
-					else {
-						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
-					}
+					payloadBuffer = Buffer.concat([payloadBuffer, new Buffer(param)]);
 
-					var dataLength = dataBuf.length;
+				} else {
+					// Add each byte of param to array
+					var rBuf = new Buffer(2);
+					rBuf.writeUInt16LE(param, 0);
+					payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
+				}
 
-					var totalPacketSize = dataLength + command.header.lolen;
+				break;
 
-					command.header.payloadLowBits = totalPacketSize & 0xFF;
-					command.header.payloadHighBits = totalPacketSize >> 8;
+			// This parameter is 8 bits
+			case 3:
+			case 2:
+				// Add each byte of param to array
+				var rBuf = new Buffer(1);
+				rBuf.writeUInt8(param, 0);
+				payloadBuffer = Buffer.concat([payloadBuffer, rBuf], payloadBuffer.length + rBuf.length);
 
-					dataBuf = Buffer.concat([new Buffer([dataLength]), dataBuf], dataLength + 1);
+				break
+			// This parameter is a data length and uint8 array
+			case 9:
+			case 8:
 
-					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
+				var dataBuf;
 
-					break;
+				if (Buffer.isBuffer(param)) {
+					dataBuf = param;
+				}
+				else if (Array.isArray(param) || typeof param == "string") {
+					dataBuf = new Buffer(param);
+				}
+				else {
+					return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
+				}
 
-				// This parameter is a hardware address
-				case 10:
-					var address;
-					if (Array.isArray(param)) {
-						address = new Buffer(address);
-					}
-					if (Buffer.isBuffer(param)) {
-						address = param;
-					}
-					payloadBuffer = Buffer.concat([payloadBuffer, address]);
+				var dataLength = dataBuf.length;
 
-					break;
+				var totalPacketSize = dataLength + command.header.lolen;
 
-				// uint16 array (and data length)
-				case 11:
+				command.header.payloadLowBits = totalPacketSize & 0xFF;
+				command.header.payloadHighBits = totalPacketSize >> 8;
 
-					var dataBuf;
+				dataBuf = Buffer.concat([new Buffer([dataLength]), dataBuf], dataLength + 1);
 
-					if (Buffer.isBuffer(param)) {
-						dataBuf = param;
-					}
-					else if (Array.isArray(param) || typeof param == "string") {
-						dataBuf = new Buffer(param);
-					}
-					else {
-						return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
-					}
-					// Times two because these are uint16s
-					var dataLength = param.length * 2;
+				payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
 
-					var totalPacketSize = dataLength + command.header.lolen;
+				break;
 
-					command.header.payloadLowBits = totalPacketSize & 0xFF;
-					command.header.payloadHighBits = totalPacketSize >> 8;
+			// This parameter is a hardware address
+			case 10:
+				var address;
+				if (Array.isArray(param)) {
+					address = new Buffer(address);
+				}
+				if (Buffer.isBuffer(param)) {
+					address = param;
+				}
+				payloadBuffer = Buffer.concat([payloadBuffer, address]);
 
-					dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(dataBuf)], dataLength + 1);
+				break;
 
-					payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
+			// uint16 array (and data length)
+			case 11:
 
-					break;
-			}
+				var dataBuf;
 
-			paramCode  = paramCode >> 4;
+				if (Buffer.isBuffer(param)) {
+					dataBuf = param;
+				}
+				else if (Array.isArray(param) || typeof param == "string") {
+					dataBuf = new Buffer(param);
+				}
+				else {
+					return callback && callback(new Error("Invalid parameter type. Should be an Array or string"));
+				}
+				// Times two because these are uint16s
+				var dataLength = param.length * 2;
+
+				var totalPacketSize = dataLength + command.header.lolen;
+
+				command.header.payloadLowBits = totalPacketSize & 0xFF;
+				command.header.payloadHighBits = totalPacketSize >> 8;
+
+				dataBuf = Buffer.concat([new Buffer([dataLength]), new Buffer(dataBuf)], dataLength + 1);
+
+				payloadBuffer = Buffer.concat([payloadBuffer, dataBuf], payloadBuffer.length + dataBuf.length);
+
+				break;
 		}
-		// Make the packet with the payload and header
-		var packet = new Packet(_bgmessageType.Command,
-			_bgtechnologyType.Bluetooth,
-			command.header.cls,
-			command.header.command,
-			payloadBuffer,
-			this.packetMode);
 
-		// Call the callback
-		callback && callback(null, packet);
+		paramCode  = paramCode >> 4;
+	}
+	// Make the packet with the payload and header
+	var packet = new Packet(_bgmessageType.Command,
+		_bgtechnologyType.Bluetooth,
+		command.header.cls,
+		command.header.command,
+		payloadBuffer,
+		this.packetMode);
 
-		// Return the packet if it was lazily created
-		return packet;
-	}.bind(this));
+	// Return the packet if it was lazily created
+	return packet;
 }
 
-bglib.prototype.verifyParams = function(paramCode, params, callback) {
+bglib.prototype.verifyParams = function(paramCode, params) {
 
 	// If there are no params
 	if (!params) {
 		// And the param code indicates that there should be, throw an err
-		if (paramCode)  return callback(new Error("Need to pass in parameters"));
+		if (paramCode) {
+			return new Error("Need to pass in parameters");
+		}
 
 		// If there shouldn't be, just return
-		else return callback(null);
+		return;
 	}
 
 	var numParams = this.numParamsFromCode(paramCode);
 
 	// Make sure the number passed in is correct
 	if (numParams != params.length) {
-		return callback(new Error("Invalid number of parameters passed for method"));
+		return new Error("Invalid number of parameters passed for bglib function");
 	} else {
-		return callback(null);
+		return;
 	}
 }
 
