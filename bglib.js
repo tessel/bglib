@@ -671,7 +671,7 @@ bglib.prototype.getPacket = function(command, params, callback) {
 				case 10:
 					var address;
 					if (Array.isArray(param)) {
-						address = new Buffer(address);
+						address = new Buffer(param);
 					}
 					if (Buffer.isBuffer(param)) {
 						address = param;
