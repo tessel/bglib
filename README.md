@@ -1,17 +1,20 @@
-##BGLib
+## BGLib
+
+[![Code of Conduct](https://img.shields.io/badge/%E2%9D%A4-code%20of%20conduct-blue.svg?style=flat)](https://github.com/tessel/project/blob/master/CONDUCT.md)
+
 BGLib is a Node library for sending and receiving packets from BlueGiga BLE devices (currently supports ble112 and ble113). It is currently being developed by Technical Machine to support our Tessel BLE module.
 
-##Install
-```
+## Install
+```sh
 npm install bglib
 ```
 
 
-##Examples
+## Examples
 
-###Creating a packet
+### Creating a packet
 
-```
+```javascript
 var bg = require('bglib');
 
 var bglib = new bg()
@@ -42,9 +45,9 @@ bglib.getPacket(bg.api.gapDiscover, [1, 0], function(err, response) {
   */
 });
 ```
-###Parsing Incoming Data
+### Parsing Incoming Data
 
-```
+```javascript
 var incomingBytes = new Buffer([ 128, 38, 6, 0, 189, 0, 108, 189, 40, 93, 28, 216, 1, 255, 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 191, 162, 189, 1, 70, 125, 110, 56, 88, 171, 173, 5, 22, 10, 24, 7, 4]);
 
 bglib.parseIncoming(incomingBytes, function(err, parsedPackets) {
@@ -64,5 +67,5 @@ bglib.parseIncoming(incomingBytes, function(err, parsedPackets) {
 
 The library will hold the current state of the packets so you can pass in pieces of a packet and it will return the entire parsed packet when it has all been passed in.
 
-###Thanks
+### Thanks
 JRowberg deserves a special shout-out. Some of the code is modeled after [his Arduino bglib work](https://github.com/jrowberg/bglib).
