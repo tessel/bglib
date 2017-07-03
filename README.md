@@ -5,7 +5,7 @@
 BGLib is a Node library for sending and receiving packets from BlueGiga BLE devices (currently supports ble112 and ble113). It is currently being developed by Technical Machine to support our Tessel BLE module.
 
 ## Install
-```
+```sh
 npm install bglib
 ```
 
@@ -47,7 +47,7 @@ bglib.getPacket(bg.api.gapDiscover, [1, 0], function(err, response) {
 ```
 ### Parsing Incoming Data
 
-```
+```javascript
 var incomingBytes = new Buffer([ 128, 38, 6, 0, 189, 0, 108, 189, 40, 93, 28, 216, 1, 255, 27, 2, 1, 6, 17, 6, 186, 86, 137, 166, 250, 191, 162, 189, 1, 70, 125, 110, 56, 88, 171, 173, 5, 22, 10, 24, 7, 4]);
 
 bglib.parseIncoming(incomingBytes, function(err, parsedPackets) {
