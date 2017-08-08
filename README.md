@@ -1,5 +1,7 @@
 ## BGLib
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/tessel/bglib.svg)](https://greenkeeper.io/)
+
 [![Code of Conduct](https://img.shields.io/badge/%E2%9D%A4-code%20of%20conduct-blue.svg?style=flat)](https://github.com/tessel/project/blob/master/CONDUCT.md)
 
 BGLib is a Node library for sending and receiving packets from BlueGiga BLE devices (currently supports ble112 and ble113). It is currently being developed by Technical Machine to support our Tessel BLE module.
